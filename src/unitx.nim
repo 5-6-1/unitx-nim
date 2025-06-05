@@ -158,6 +158,12 @@ proc divUnitHelper(a,b:static[string]):static[seq[(string,int)]] =
     else:
       result.add tupB[cuB]
       inc cuB
+  if cuA!=tupA.len:
+    for i in cuA..tupA.len-1:
+      result.add tupA[i]
+  if cuB!=tupB.len:
+    for i in cuB..tupB.len-1:
+      result.add tupB[i]
 proc divUnit(a,b:static[string]):static[string] = tupToUnit divUnitHelper(a,b)
 proc powerUnitHelper(a:static[string],n:static[int]):static[seq[(string,int)]] =
   let tupA=tupUnit(a)
