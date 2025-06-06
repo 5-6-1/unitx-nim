@@ -8,71 +8,90 @@ You can use any unit you can think of
 ## Examples
 ```nim
 import unitx
+import math
 
-# =====================
-# 基础物理单位运算 (修正：保持工程习惯输出)
-# =====================
-let
-  distance = 150.0 ~ km         # 距离：150km
-  time = 45.0 ~ minutes          # 时间：45分钟
-  speed = distance / time        # 速度自动推导
+when isMainModule:
+  echo "====== Physics & Mechanics ======"
 
-echo "车速：", speed.convertUnit {minutes: 1.0/60.0 ~ hour}  # 输出：200.0 km/hour
+  # Basic kinematics demo
+  let height = 100.0~m        # Distance in meters
+  const g = 9.8~m/s^2         # Gravitational acceleration
+  let time = (2.0 * height / g)^0.5
+  echo "Time to fall: ", time  # Automatically formats as " 4.5175395145262565 s"
 
-# =====================
-# 单位即时转换 (修正转换因子)
-# =====================
-let usSpeed = speed.convertUnit {
-  km: 1.609 ~ mile,              # km → mile
-  minutes: 1.0/60.0 ~ hour           # 分钟→小时
-}
+  let initVelocity = 20.0~m/s
+  let velocity = initVelocity + g * time
+  echo "Impact velocity: ", velocity  # "64.27188724235731 m/s"
 
-echo "美制单位：", usSpeed    # 输出：321.8 mile/hour
+  echo "\n====== Finance Calculation ======"
+  let 电脑价格 = 5000.0~元       # Computer price in yuan
+  let monthlyIncome = 12000.0~元/月  # Monthly income
 
-# =====================
-# 跨学科单位计算 (完全重构)
-# =====================
-let
-  cpuPower = 320.0 ~ GFLOPS      # 计算能力
-  energyUse = 250.0 ~ watt       # 能耗
-  efficiency = cpuPower / energyUse
+  # Calculate payoff time
+  let payoffTime = 电脑价格 / monthlyIncome
+  echo "电脑偿还时间: ", payoffTime  # Shows as 0.4166666666666667 月
 
-# 物理正确的单位转换：
-let econRating = efficiency.convertUnit {
-  watt: 0.001 ~ kW,              # 功率单位转换
-  GFLOPS: 1e10 ~ FLOPS/second,
-  second: 1.0/3600.0 ~ hour          # 时间单位转换
-}                                # GFLOPS → FLOPS (十亿到基本单位)
+  # Convert to days
+  let payoffDays = payoffTime.convertUnit {月: 30.0~日}
+  echo "相当于 ", payoffDays  # Shows as 12.5 日
 
-echo "能效评级：", econRating # 输出：4608000000000000.0 FLOPS/hour·kW (4.608e12)
+  echo "\n====== Chemistry Calculations ======"
+  const molarMass = 18.015~g/mol
+  let waterSample = 5.0~g
 
-# =====================
-# 自定义趣味单位 (保持不变)
-# =====================
-const CoffeePower = 1.0 ~ 杯咖啡
-let
-  taskComplexity = 3.0 ~ 任务点
-  programmer = (2.0 ~ 程序员) * (0.5 ~ 杯咖啡/hour)
-  timeEstimate = taskComplexity / programmer
+  # Calculate moles
+  let moles = waterSample / molarMass
+  echo "Moles of water: ", moles  # "0.2775464890369137 mol"
 
-echo "完成时间：", timeEstimate # 输出：3.0 hour·任务点/杯咖啡·程序员
+  # Avogadro's number
+  const N_A = 6.022e23 ~ /mol
+  let molecules = moles * N_A
+  echo "Molecules: ≈", molecules.deUnit  # Show as integer count 1.6713849569802942e+23
 
-# =====================
-# 编译时期量纲安全 (保持不变)
-# =====================
-try:
-  # 下面语句会导致编译错误（类型不匹配）
-  # let invalid = speed + energyUse
-  discard
-except:
-  echo "✅ 量纲保护生效：无法将速度与能量相加！"
+  echo "\n====== Custom Units ======"
+  # Astronomy example
+  const astronomicalUnit = 1.496e11~m  # Earth-Sun distance
+  let marsDistance = 1.52 * astronomicalUnit
+  echo "Mars distance: ", marsDistance.convertUnit {m: 1e3~km}  # Show in km 227392000000000.0 km
 
-# 输出结果：
-# 车速：200 km/hour
-# 美制单位：200.0 mile/hour
-# 能效评级：4.608e12 FLOPS·kW⁻¹·hour⁻¹
-# 完成时间：3.0 hour·任务点/杯咖啡·程序员
-# ✅ 量纲保护生效：无法将速度与能量相加！
+  # Crypto example
+  let portfolio = (0.5~₿) + (3.5~Ξ).convertUnit {Ξ: 0.069~₿}
+  echo "Portfolio value: ", portfolio, " (in BTC)"   #0.7415 ₿
+
+  echo "\n====== Complex Formulas ======"
+  # Electromagnetism: Energy in a capacitor
+  let capacitance = 100e-6~F      # 100 μF
+  let voltage = 12.0~V            # 12 Volts
+  let energy = 0.5 * capacitance * (voltage^2)
+  echo "Capacitor energy: ", energy.convertUnit {V:1.0~J^(1/2)/F^(1/2),J: 1e3~mJ}  # Show in milliJoules 7.200000000000001 mJ
+
+  # Wave physics
+  let wavelength = 500e-9~m       # 500 nm (green light)
+  const c = 3e8~m/s               # Speed of light
+  let frequency = c / wavelength
+  echo "Light frequency: ", frequency.convertUnit {s: 1.0 ~ /Hz}  # Show in Hz   600000000000000.0 Hz
+
+  echo "\n====== Fractional Exponents ======"
+  # Drag force equation: Fₛ = √(ρ) * A * v²
+  let density = 1.225~kg/m^3       # Air density
+  let area = 0.5~m^2               # Frontal area
+  let velocity_n = 25.0~m/s          # Velocity
+
+  let dragForce = createUnit(density.deUnit ^ 0.5,density.U) * area * velocity_n^2
+  echo "Drag force: ≈", dragForce.convertUnit {kg: 1.0~s^2*N/m}  # ~345.8741190809165 N
+
+  # Custom fractional exponent
+  let cubeRoot = createUnit(1.0, "∛m³")  # Cube root of meters cubed
+  let volume = 27.0~m^3
+  let sideLength = (volume) ^ (1.0/3)  # = ∛(27 m³) = 3 m
+  echo "Cube side: ", sideLength    # 3.0 m
+
+  echo "\n====== Error Prevention ======"
+  # Type-safe units prevent incorrect operations
+  let distance = 10.0~m
+  let time_n = 2.0~s
+  # let invalid = distance + time_n  # Compile-time error: unit mismatch
+  echo "\n====== All Features Showcase Complete ======"
 
 
 
