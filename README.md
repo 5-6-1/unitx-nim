@@ -81,7 +81,6 @@ when isMainModule:
   echo "Drag force: ≈", dragForce.convertUnit {kg: 1.0~s^2*N/m}  # ~345.8741190809165 N
 
   # Custom fractional exponent
-  let cubeRoot = createUnit(1.0, "∛m³")  # Cube root of meters cubed
   let volume = 27.0~m^3
   let sideLength = (volume) ^ (1.0/3)  # = ∛(27 m³) = 3 m
   echo "Cube side: ", sideLength    # 3.0 m
