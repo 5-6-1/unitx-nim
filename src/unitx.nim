@@ -307,7 +307,7 @@ proc `/`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,divUnit(U1,U
 proc `*`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]=Unit[T,U](T(l)*r)
 proc `/`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]=Unit[T,U](T(l)/r)
 proc `*`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,U]=Unit[T,U](T(l)*r)
-proc `/`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,U]=Unit[T,U](T(l)/r)
+proc `/`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,powerUnit(U,(-1,1))]=Unit[T,powerUnit(U,(-1,1))](r/T(l))
 proc `^`*[T;U:static[string]](l:Unit[T,U],n:static[(int,int)]):
   Unit[T,powerUnit(U,n)]=Unit[T,powerUnit(U,n)]T(float(l) ^ (n[0].float/n[1].float))
 proc `^`*[T;U:static[string]](l:Unit[T,U],n:static[int]):
