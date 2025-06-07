@@ -2,7 +2,6 @@ import macros
 import strutils
 import algorithm
 import math
-import sequtils
 import tables
 import unicode
 
@@ -54,23 +53,6 @@ proc simplifyFrac(num:(int,int)):(int,int) =
     if num[1]>0:(num[0] div gcdVal,num[1] div gcdVal)
     elif num[1]<0:(-num[0] div gcdVal,-num[1] div gcdVal)
     else: raise newException(ValueError,"Invalid fraction")
-proc fastPow[T](base: T, exponent: int): T =
-  if exponent == 0:return T(1)
-  if base == T(0):
-    if exponent < 0: raise newException(ValueError, "Division by zero: base is zero with negative exponent")
-    else: return T(0)
-  let exp = if exponent < 0: -exponent else: exponent
-  var
-    baseVal = base
-    e = exp
-  result = T(1)
-  while e > 0:
-    if (e and 1) != 0:
-      result = result * baseVal
-    baseVal = baseVal * baseVal
-    e = e shr 1
-  if exponent < 0:
-    result = T(T(1) / result)
 proc fracAdd(a, b: (int, int)): (int, int) =simplifyFrac (a[0]*b[1]+b[0]*a[1],a[1]*b[1])
 proc fracMul(a, b: (int, int)): (int, int) =simplifyFrac (a[0]*b[0],a[1]*b[1])
 proc fracPow[T](a:T, b: (int, int)):T = T(a.float^(b[0].float/b[1].float))
@@ -213,14 +195,17 @@ proc tupToUnit(tups:static[seq[(string,(int,int))]]):static[string] =
     st=newSeq[string]()
     stDiv=newSeq[string]()
   for (s,e)in tups:
-    if e[0]>0:st.add s&(if e[0]!=1 or e[1]!=1: "^" & $e[0] & (if e[1]!=1:"/"& $e[1]else:"") else: "")
+    if e[0]>0:st.add s&(if e[0]!=1 or e[1]!=1: "^" & $e[0] & (if e[1]!=1:"/" & $e[1]else:"") else: "")
     elif e[0]==0:continue
-    else:stDiv.add s&(if e[0] != -1 or e[1]!=1: "^" & $(-e[0]) & (if e[1]!=1:"/"& $e[1]else:"") else: "")
+    else:stDiv.add s&(if e[0] != -1 or e[1]!=1: "^" & $(-e[0]) & (if e[1]!=1:"/" & $e[1]else:"") else: "")
   st.join("*")&(if stDiv.len>0:"//"&stDiv.join"*" else:"")
-proc formatUnit(u:static[string]):static[string] =tupToUnit tupUnit formatUnitHelper u
+proc formatUnit*(u:static[string]):static[string] =
+  let list=u.split"//"
+  if list.len>1:u
+  else:tupToUnit tupUnit formatUnitHelper u
 proc createUnit*[T](val:T,u:static[string]):Unit[T,formatUnit u]=Unit[T,formatUnit u]val#由string创建单位
 macro `~`*(val,str):Unit =
-  if val is (bind unitx.Unit):
+  if val is unitx.Unit:
     quote do:`val` * createUnit(`val`.T(1),formatUnit astToStr `str`)
   else:
     quote do:unitx.Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
@@ -312,7 +297,7 @@ macro convertUnit*(val,conv):untyped =
       expectKind con, nnkExprColonExpr
       expectKind con[1],nnkInfix
       expectIdent con[1][0],"~"
-      result = newCall(ident"convertUnitInner",result,toStrLit con[0],toStrLit con[1][2],con[1][1])#单位安全转换
+      result = newCall(ident"convertUnitInner",result,toStrLit con[0],newTree(nnkCall,ident"formatUnit",toStrLit con[1][2]),con[1][1])#单位安全转换
 
 
 proc `+`*[T;U:static[string]](l,r:Unit[T,U]):Unit[T,U] = Unit[T,U](T(l)+T(r))
@@ -321,6 +306,8 @@ proc `*`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,mulUnit(U1,U
 proc `/`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,divUnit(U1,U2)]=Unit[T,divUnit(U1,U2)](T(l)/T(r))
 proc `*`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]=Unit[T,U](T(l)*r)
 proc `/`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]=Unit[T,U](T(l)/r)
+proc `*`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,U]=Unit[T,U](T(l)*r)
+proc `/`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,U]=Unit[T,U](T(l)/r)
 proc `^`*[T;U:static[string]](l:Unit[T,U],n:static[(int,int)]):
   Unit[T,powerUnit(U,n)]=Unit[T,powerUnit(U,n)]T(float(l) ^ (n[0].float/n[1].float))
 proc `^`*[T;U:static[string]](l:Unit[T,U],n:static[int]):
