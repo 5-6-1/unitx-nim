@@ -574,7 +574,8 @@ template unitxSi*()=
       arcsecond: 4.848136811095e-6~radian,
     }
   else:
-    error "please use it at top and only once"
+    static:
+      error "please use it at top and only once"
 func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createUnit(f(x.deUnit),x.U)
 
 
