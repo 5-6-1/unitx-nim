@@ -11,88 +11,90 @@ import unitx
 import math
 
 when isMainModule:
-  echo "====== Physics & Mechanics ======"
+  # Define common units in SI base
+  addSiUnit {
+    # Metric prefixes
+    km: 1000~meter, cm: 0.01~meter, mm: 0.001~meter,
+    kg: 1~kilogram, g: 0.001~kilogram,
+    ms: 0.001~second, min: 60~second, hr: 3600~second,
 
-  # Basic kinematics demo
-  let height = 100.0~m        # Distance in meters
-  const g = 9.8~m/s^2         # Gravitational acceleration
-  let time = (2.0 * height / g)^0.5
-  echo "Time to fall: ", time  # Automatically formats as " 4.5175395145262565 s"
+    # Scientific units
+    N: 1~kilogram*meter/second^2,      # Newton
+    J: 1~N*meter,                     # Joule
+    W: 1~J/second,                    # Watt
+    Pa: 1~N/meter^2,                   # Pascal
 
-  let initVelocity = 20.0~m/s
-  let velocity = initVelocity + g * time
-  echo "Impact velocity: ", velocity  # "64.27188724235731 m/s"
+    # Astronomy
+    AU: 149597870700~meter,            # Astronomical Unit
+    ly: 9460730472580800~meter,        # Light-year
 
-  echo "\n====== Finance Calculation ======"
-  let 电脑价格 = 5000.0~元       # Computer price in yuan
-  let monthlyIncome = 12000.0~元/月  # Monthly income
+    # Economics
+    USD: 1~"", EUR: 0.93~USD,           # Currency
+    BTC: 25000~USD, ETH: 1800~USD,     # Crypto
 
-  # Calculate payoff time
-  let payoffTime = 电脑价格 / monthlyIncome
-  echo "电脑偿还时间: ", payoffTime  # Shows as 0.4166666666666667 月
+    # Chemistry
+    mol: 1~mole, mmol: 0.001~mole
+  }
+  echo "==== Physics: Gravitational Potential ===="
+  const g = 9.80665~meter/second^2      # Standard gravity
+  let height = 100.0~meter
+  let fallTime = (2.0 * height / g)^0.5
+  echo "Fall time: ", fallTime          # 4.5160075575178755 second
 
-  # Convert to days
-  let payoffDays = payoffTime.convertUnit {月: 30.0~日}
-  echo "相当于 ", payoffDays  # Shows as 12.5 日
+  let impactEnergy = height * (75.0~kilogram) * g  # Weight = 75kg
+  echo "Impact energy: ", impactEnergy.convertSimpleSiUnit  # 73549.875 kilogram·meter²/second²
 
-  echo "\n====== Chemistry Calculations ======"
-  const molarMass = 18.015~g/mol
-  let waterSample = 5.0~g
+  echo "\n==== Quantum Physics: Photon Energy ===="
+  const
+    h = 6.62607015e-34~J*second            # Planck constant
+    c = 299792458.0~meter/second         # Speed of light
 
-  # Calculate moles
-  let moles = waterSample / molarMass
-  echo "Moles of water: ", moles  # "0.2775464890369137 mol"
+  let photonWavelength = 532e-9~meter  # Green laser
+  let photonEnergy = h * c / photonWavelength
+  echo "Photon energy: ", photonEnergy.convertUnit {J: 1.0/1.602e-19~eV}  # 2.3307870063136877 eV
 
-  # Avogadro's number
-  const N_A = 6.022e23 ~ /mol
+  echo "\n==== Finance: Unified Portfolio Calculation ===="
+  let
+    cash = 5000~USD
+    btc = 1~BTC
+    eth = 3~ETH
+
+  let portfolioUSD = cash + btc + eth
+  echo "Solution 1 portfolio: ", portfolioUSD  # 35400 USD
+
+  echo "\n==== Chemistry: Molar Calculations ===="
+  let H2O_Mass = 18.01528~g/mol        # Molar mass
+  let sampleMass = 100.0~g
+  let moles = sampleMass / H2O_Mass
+
+  const N_A = 6.02214076e23 ~ /mol       # Avogadro's constant
   let molecules = moles * N_A
-  echo "Molecules: ≈", molecules.deUnit  # Show as integer count 1.6713849569802942e+23
+  echo "Molecules in 100g water: ≈", molecules #3.342796093094306e+24
 
-  echo "\n====== Custom Units ======"
-  # Astronomy example
-  const astronomicalUnit = 1.496e11~m  # Earth-Sun distance
-  let marsDistance = 1.52 * astronomicalUnit
-  echo "Mars distance: ", marsDistance.convertUnit {m: 1e3~km}  # Show in km 227392000000000.0 km
+  echo "\n==== Astronomy: Cosmic Scales ===="
+  # 更精确的单位定义
+  addSiUnit {
+      AU: 149597870700~meter,           # 1 AU = 149,597,870,700 m
+      ly: 9460730472580800~meter,       # 1 ly = 9,460,730,472,580,800 m
+      year: 31556952~second             # 天文年 = 365.2425 days
+  }
+  let solarSystem = 80.0~AU
+  echo "Solar System diameter: ", solarSystem.convertUnit {AU:149597870700/9460730472580800~ly} # 0.0012650005927856527 ly
 
-  # Crypto example
-  let portfolio = (0.5~₿) + (3.5~Ξ).convertUnit {Ξ: 0.069~₿}
-  echo "Portfolio value: ", portfolio, " (in BTC)"   #0.7415 ₿
+  let andromeda = 2.5e6~ly
+  let cosmicTravelTime = andromeda / c  # 单位：秒
+  echo "Andromeda light travel time: ", cosmicTravelTime.convertSimpleSiUnit.convertUnit {second: 1/31556952~year} #2500051.3357563815 year
 
-  echo "\n====== Complex Formulas ======"
-  # Electromagnetism: Energy in a capacitor
-  let capacitance = 100e-6~F      # 100 μF
-  let voltage = 12.0~V            # 12 Volts
-  let energy = 0.5 * capacitance * (voltage^2)
-  echo "Capacitor energy: ", energy.convertUnit {V:1.0~J^(1/2)/F^(1/2),J: 1e3~mJ}  # Show in milliJoules 7.200000000000001 mJ
+  echo "\n==== Engineering: Material Strength ===="
+  let beamForce = 500.0~N
+  let beamArea = 0.005~meter^2
+  let stress = beamForce / beamArea
+  echo "Material stress: ", stress.convertUnit {N:1.0~pa*meter^2,pa:0.0001~kpa}  # 10.0 kpa
 
-  # Wave physics
-  let wavelength = 500e-9~m       # 500 nm (green light)
-  const c = 3e8~m/s               # Speed of light
-  let frequency = c / wavelength
-  echo "Light frequency: ", frequency.convertUnit {s: 1.0 ~ /Hz}  # Show in Hz   600000000000000.0 Hz
+  # Automatic dimension checking (commented to run)
+  # let invalid = 5~meter + 10~second  # Compile-time error
 
-  echo "\n====== Fractional Exponents ======"
-  # Drag force equation: Fₛ = √(ρ) * A * v²
-  let density = 1.225~kg/m^3       # Air density
-  let area = 0.5~m^2               # Frontal area
-  let velocity_n = 25.0~m/s          # Velocity
-
-  let dragForce = createUnit(density.deUnit ^ 0.5,density.U) * area * velocity_n^2
-  echo "Drag force: ≈", dragForce.convertUnit {kg: 1.0~s^2*N/m}  # ~345.8741190809165 N
-
-  # Custom fractional exponent
-  let volume = 27.0~m^3
-  let sideLength = (volume) ^ (1.0/3)  # = ∛(27 m³) = 3 m
-  echo "Cube side: ", sideLength    # 3.0 m
-
-  echo "\n====== Error Prevention ======"
-  # Type-safe units prevent incorrect operations
-  let distance = 10.0~m
-  let time_n = 2.0~s
-  # let invalid = distance + time_n  # Compile-time error: unit mismatch
-  echo "\n====== All Features Showcase Complete ======"
-
-
+  echo "\n==== Unitx Demonstration Complete ===="
 
 ```
 Perhaps you need to use AI to analyze my 300 lines of lightweight source code
