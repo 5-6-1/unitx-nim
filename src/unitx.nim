@@ -464,7 +464,7 @@ func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleS
   Unit[T,tupToUnit t[1]](s.float*t[0])
 
 
-template UnitxSi*()=
+template unitxSi*()=
   when flag:
     addSiUnit {
 
