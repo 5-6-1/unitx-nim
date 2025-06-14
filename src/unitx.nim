@@ -312,6 +312,12 @@ macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
     quote do:Unit[typeof `val`,`str`] `val`
   else:
     quote do:Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
+macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
+  if val is Unit:
+    quote do:`val` * createUnit(`val`.T(1),T(1)/(formatUnit astToStr `str`))
+  elif str.kind!=nnkStrLit:
+    quote do:Unit[typeof `val`,T(1)/(formatUnit astToStr `str`)] `val`
+  else:error "syntax error"
 func mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] {.compileTime.}=
   let
     tupA=tupUnit(a)
@@ -461,14 +467,6 @@ func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleS
 template UnitxSi*()=
   when flag:
     addSiUnit {
-      # SI 基本单位
-      meter: 1.0~meter,
-      kilogram: 1.0~kilogram,
-      second: 1.0~second,
-      ampere: 1.0~ampere,
-      kelvin: 1.0~kelvin,
-      mole: 1.0~mole,
-      candela: 1.0~candela,
 
       # 长度单位
       kilometer: 1000.0~meter,
@@ -550,12 +548,12 @@ template UnitxSi*()=
       henry: 1.0~tesla*meter^2/ampere,
 
       # 频率单位
-      hertz: 1.0~/second,
+      hertz: 1.0~ / second,
       kilohertz: 1000.0~hertz,
       megahertz: 1e6~hertz,
 
       # 辐射计量
-      becquerel: 1.0~/second,
+      becquerel: 1.0~ / second,
       gray: 1.0~joule/kilogram,
       sievert: 1.0~joule/kilogram,
 
