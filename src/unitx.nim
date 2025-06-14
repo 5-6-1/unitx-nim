@@ -305,19 +305,6 @@ func formatUnit*(u:static[string]):static[string]{.compileTime.} =
   if list.len>1:u
   else:tupToUnit tupUnit formatUnitHelper u
 func createUnit*[T](val:T,u:static[string]):Unit[T,formatUnit u]{.inline.}=Unit[T,formatUnit u]val#由string创建单位
-macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
-  if val is Unit:
-    quote do:`val` * createUnit(`val`.T(1),formatUnit astToStr `str`)
-  elif str.kind==nnkStrLit:
-    quote do:Unit[typeof `val`,`str`] `val`
-  else:
-    quote do:Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
-macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
-  if val is Unit:
-    quote do:`val` * createUnit(`val`.T(1),T(1)/(formatUnit astToStr `str`))
-  elif str.kind!=nnkStrLit:
-    quote do:Unit[typeof `val`,T(1)/(formatUnit astToStr `str`)] `val`
-  else:error "syntax error"
 func mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] {.compileTime.}=
   let
     tupA=tupUnit(a)
@@ -380,6 +367,20 @@ func powerUnitHelper(a:static[string],n:static[(int,int)]):static[seq[(string,(i
   for (s,e) in tupA:
     result.add (s,(e[0],e[1]).fracMul n)
 func powerUnit(a:static[string],n:static[(int,int)]):static[string] {.compileTime.}= tupToUnit powerUnitHelper(a,n)
+macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
+  if val is Unit:
+    quote do:`val` * createUnit(`val`.T(1),formatUnit astToStr `str`)
+  elif str.kind==nnkStrLit:
+    quote do:Unit[typeof `val`,`str`] `val`
+  else:
+    quote do:Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
+macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
+  let x=powerUnitHelper(str.astToStr.formatUnit,(-1,1))
+  if val is Unit:
+    quote do:`val` * createUnit(`val`.T(1),`x`)
+  elif str.kind!=nnkStrLit:
+    quote do:Unit[typeof `val`,`x`] `val`
+  else:error "syntax error"
 func deUnit*[T;U:static[string]](u:Unit[T,U]):T{.inline.}=T(u)#获得单位数值
 func convertUnitHelp(val:static[string],orign:static[string]):static[(int,int)]{.compileTime.}=
   let tup=tupUnit(val)
