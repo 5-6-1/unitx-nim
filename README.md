@@ -9,7 +9,6 @@ Build dimensionally correct physics, finance and astronomy models
 ```nim
 import unitx
 import math
-
 when isMainModule:
   # Define common units in SI base
   addSiUnit {
@@ -79,7 +78,7 @@ when isMainModule:
       year: 31556952~second             # 天文年 = 365.2425 days
   }
   let solarSystem = 80.0~AU
-  echo "Solar System diameter: ", solarSystem.convertUnit {AU:149597870700/9460730472580800~ly} # 0.0012650005927856527 ly
+  echo "Solar System diameter: ", (0.0~ly) + solarSystem # 0.0012650005927856527 ly
 
   let andromeda = 2.5e6~ly
   let cosmicTravelTime = andromeda / c  # 单位：秒
