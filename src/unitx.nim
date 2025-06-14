@@ -36,6 +36,7 @@ func readUnit*(u:static[string]):static[string]{.compileTime.}=
       d=0
 const siList = ["meter","kilogram","second","ampere","kelvin","mole","candela",""]
 var siTable*{.compileTime.}=initTable[string,(float,string)]()
+var flag*{.compileTime.}=true
 
 
 
@@ -407,6 +408,7 @@ macro convertUnit*(val,conv):untyped =
 
 
 macro addSiUnit*(conv):untyped =
+  flag=false
   result=newTree(nnkStaticStmt,newStmtList())
   if conv.kind==nnkTableConstr:
     for con in conv:
@@ -455,16 +457,126 @@ func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleS
   const t=U.toSimpleSiUnit
   Unit[T,tupToUnit t[1]](s.float*t[0])
 
-var flag*{.compileTime.}=true
-template addUnitxSi*()=
+
+template UnitxSi*()=
   when flag:
     addSiUnit {
-      kilometer:1000.0~meter,
-      decimeter:0.1~meter,
-      centimeter:0.01~meter,
-      millimeter:0.001~meter,
+      # SI 基本单位
+      meter: 1.0~meter,
+      kilogram: 1.0~kilogram,
+      second: 1.0~second,
+      ampere: 1.0~ampere,
+      kelvin: 1.0~kelvin,
+      mole: 1.0~mole,
+      candela: 1.0~candela,
+
+      # 长度单位
+      kilometer: 1000.0~meter,
+      decimeter: 0.1~meter,
+      centimeter: 0.01~meter,
+      millimeter: 0.001~meter,
+      micrometer: 1e-6~meter,
+      nanometer: 1e-9~meter,
+      picometer: 1e-12~meter,
+      femtometer: 1e-15~meter,
+      astronomicalunit: 149597870700.0~meter,  # 天文单位
+      lightyear: 9460730472580800.0~meter,    # 光年
+
+      # 质量单位
+      gram: 0.001~kilogram,
+      milligram: 1e-6~kilogram,
+      microgram: 1e-9~kilogram,
+      ton: 1000.0~kilogram,
+
+      # 时间单位
+      millisecond: 0.001~second,
+      microsecond: 1e-6~second,
+      nanosecond: 1e-9~second,
+      minute: 60.0~second,
+      hour: 3600.0~second,
+      day: 86400.0~second,
+      year: 31557600.0~second,  # 儒略年
+
+      # 电流单位
+      milliampere: 0.001~ampere,
+      microampere: 1e-6~ampere,
+
+      # 温度单位
+      celsius: 1.0~kelvin,  # 用于温度差值
+
+      # 衍生力单位
+      newton: 1.0~kilogram*meter/second^2,
+      dyne: 1e-5~newton,
+      poundforce: 4.4482216152605~newton,
+
+      # 能量单位
+      joule: 1.0~newton*meter,
+      calorie: 4.184~joule,
+      kilocalorie: 4184.0~joule,
+      electronvolt: 1.602176634e-19~joule,
+      kilowatt_hour: 3.6e6~joule,
+
+      # 功率单位
+      watt: 1.0~joule/second,
+      horsepower: 745.69987158227~watt,
+
+      # 压力单位
+      pascal: 1.0~newton/meter^2,
+      bar: 100000.0~pascal,
+      atmosphere: 101325.0~pascal,
+      torr: 133.322~pascal,
+
+      # 电荷单位
+      coulomb: 1.0~ampere*second,
+      ampere_hour: 3600.0~coulomb,
+
+      # 电位单位
+      volt: 1.0~joule/coulomb,
+
+      # 电阻单位
+      ohm: 1.0~volt/ampere,
+
+      # 电容单位
+      farad: 1.0~coulomb/volt,
+
+      # 磁通量单位
+      weber: 1.0~volt*second,
+
+      # 磁感应强度单位
+      tesla: 1.0~weber/meter^2,
+      gauss: 1e-4~tesla,
+
+      # 电感单位
+      henry: 1.0~tesla*meter^2/ampere,
+
+      # 频率单位
+      hertz: 1.0~/second,
+      kilohertz: 1000.0~hertz,
+      megahertz: 1e6~hertz,
+
+      # 辐射计量
+      becquerel: 1.0~/second,
+      gray: 1.0~joule/kilogram,
+      sievert: 1.0~joule/kilogram,
+
+      # 光通量
+      lumen: 1.0~candela*steradian,
+
+      # 照度
+      lux: 1.0~lumen/meter^2,
+
+      # 物质量
+      millimole: 0.001~mole,
+      micromole: 1e-6~mole,
+
+      # 角度单位
+      radian: 1.0~"",  # 无量纲单位
+      degree: 0.017453292519943~radian,
+      arcminute: 0.0002908882086657~radian,
+      arcsecond: 4.848136811095e-6~radian,
     }
-    flag=false
+  else:
+    error "please use it at top and only once"
 func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createUnit(f(x.deUnit),x.U)
 
 
