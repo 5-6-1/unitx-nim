@@ -1,15 +1,14 @@
 from macros import quote,
   newIdentNode,kind,nnkTableConstr,items,
   expectKind,nnkExprColonExpr,`[]`,nnkInfix,expectIdent,
-  newCall,ident,toStrLit,newTree,nnkCall,nnkStmtList,
-  nnkStaticStmt,newStmtList,`$`,error,add,nnkAsgn,
-  nnkBracketExpr,nnkTupleConstr
+  newCall,ident,toStrLit,newTree,nnkCall,nnkStmtList,nnkIdent,
+  nnkStaticStmt,newStmtList,`$`,error,add,nnkAsgn,treeRepr,
+  nnkBracketExpr,nnkTupleConstr,newStrLitNode,nnkStrLit
 from tables import `[]`,`[]=`,initTable,toTable,contains
 from strutils import split,replace,join,parseInt,contains
 from algorithm import sort
 from math import `^`,floor
 export tables.`[]=`
-
 
 const superScriptMap={'0':"⁰",'1':"¹",'2':"²",'3':"³",'4':"⁴",'5':"⁵",'6':"⁶",'7':"⁷",'8':"⁸",'9':"⁹"}.toTable
 func readUnit*(u:static[string]):static[string]{.compileTime.}=
@@ -56,7 +55,7 @@ template tupUnitTemp(x)=
         exp=
           if llist.len>1:
             let nlist=llist[1].split"/"
-            let x=nlist[0].parseInt
+            let x=(nlist[0].replace(" ","")).parseInt
             if x==0: continue
             if nlist.len==1:
               (x,1)
@@ -210,10 +209,12 @@ func addInUnit(tups: var seq[(string, (int, int))], tup: (string, (int, int))) {
       tups[idx] = (tup[0], newExp)
   else:
     tups.insert(tup, idx)
+  tups.sort cmpTupUnit
 func delOutUnit(tups: var seq[(string, (int, int))], target: string) {.compileTime.} =
   let idx = tups.findInsertIndex(target)
   if idx < tups.len and tups[idx][0] == target:
     tups.del(idx)
+  tups.sort cmpTupUnit
 
 
 
@@ -224,8 +225,9 @@ func `$`*(arg:Unit):string{.inline.} =
     $arg.T(arg)
   else:
     $arg.T(arg)&" "&arg.U.readUnit
-converter withNoUnit[T](x:Unit[T,""]):T=T(x)
+converter withNoUnit*[T](x:Unit[T,""]):T=T(x)
 func formatUnitHelper(u:static[string]):static[string] {.compileTime.}=
+
   let li=u.replace(" ","")
   var
     str=""
@@ -297,6 +299,7 @@ func tupToUnit(tups:static[seq[(string,(int,int))]]):static[string] {.compileTim
     else:stDiv.add s&(if e[0] != -1 or e[1]!=1: "^" & $(-e[0]) & (if e[1]!=1:"/" & $e[1]else:"") else: "")
   st.join("*")&(if stDiv.len>0:"//"&stDiv.join"*" else:"")
 func formatUnit*(u:static[string]):static[string]{.compileTime.} =
+  if u=="":return u
   let list=u.split"//"
   if list.len>1:u
   else:tupToUnit tupUnit formatUnitHelper u
@@ -304,6 +307,8 @@ func createUnit*[T](val:T,u:static[string]):Unit[T,formatUnit u]{.inline.}=Unit[
 macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
   if val is Unit:
     quote do:`val` * createUnit(`val`.T(1),formatUnit astToStr `str`)
+  elif str.kind==nnkStrLit:
+    quote do:Unit[typeof `val`,`str`] `val`
   else:
     quote do:Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
 func mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] {.compileTime.}=
@@ -394,7 +399,10 @@ macro convertUnit*(val,conv):untyped =
       expectKind con, nnkExprColonExpr
       expectKind con[1],nnkInfix
       expectIdent con[1][0],"~"
-      result = newCall(ident"convertUnitInner",result,toStrLit con[0],newTree(nnkCall,ident"formatUnit",toStrLit con[1][2]),con[1][1])#单位安全转换
+      var s=toStrLit(con[1][2])
+      if con[1][2].kind==nnkStrLit and con[1][2]==newStrLitNode(""):
+        s=ident""
+      result = newCall(ident"convertUnitInner",result,toStrLit con[0],newTree(nnkCall,ident"formatUnit",s),con[1][1])#单位安全转换
 
 
 
@@ -407,7 +415,8 @@ macro addSiUnit*(conv):untyped =
       expectIdent con[1][0],"~"
       if $con[0] in siList:
         error "can not change si"
-      result[0].add newTree(nnkAsgn,newTree(nnkBracketExpr,ident"siTable",toStrLit(con[0])),newTree(nnkTupleConstr,con[1][1],toStrLit con[1][2]))
+      var s=if con[1][2].kind==nnkStrLit:con[1][2] else:toStrLit(con[1][2])
+      result[0].add newTree(nnkAsgn,newTree(nnkBracketExpr,ident"siTable",toStrLit(con[0])),newTree(nnkTupleConstr,newCall(ident"float",con[1][1]), newCall(ident"formatUnit",s)))
   else:
     error "syntax error"
 proc toSimpleSiUnit(s:static[string]):static[(float,seq[(string,(int,int))])]{.compileTime.}=
@@ -441,11 +450,22 @@ proc toSimpleSiUnit(s:static[string]):static[(float,seq[(string,(int,int))])]{.c
   let jud=isSimpleSiUnittemp temp1
   if jud:(num,tup)
   else:error "not si unit"
-func convertSimpleSiUnitHelp(s:static[string]):static[string]=tupToUnit toSimpleSiUnit(s)[1]
+func convertSimpleSiUnitHelp(s:static[string]):static[string]{.compileTime.}=tupToUnit toSimpleSiUnit(s)[1]
 func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleSiUnitHelp(U)]{.inline.}=
   const t=U.toSimpleSiUnit
   Unit[T,tupToUnit t[1]](s.float*t[0])
 
+var flag*{.compileTime.}=true
+template addUnitxSi*()=
+  when flag:
+    addSiUnit {
+      kilometer:1000.0~meter,
+      decimeter:0.1~meter,
+      centimeter:0.01~meter,
+      millimeter:0.001~meter,
+    }
+    flag=false
+func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createUnit(f(x.deUnit),x.U)
 
 
 
@@ -514,4 +534,3 @@ when isMainModule:
   echo a.U
   echo a.U.toSimpleSiUnit[1].tuptoUnit.readUnit
   echo a.U.toSimpleSiUnit[0]
-
