@@ -1,8 +1,8 @@
 # unitx-nim
 
-Lightweight compile time unit system | Algebraic expression unit calculation | Zero cost type safe
+Zero-cost unit safety | Compile-time algebra | Fractional exponents
 
-You can use any unit you can think of
+Build dimensionally correct physics, finance and astronomy models
 
 
 ## Examples
