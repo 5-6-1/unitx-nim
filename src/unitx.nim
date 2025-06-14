@@ -1,12 +1,16 @@
-import macros
-import strutils
-import algorithm
-import math
-import tables
-import unicode
+from macros import quote,
+  newIdentNode,kind,nnkTableConstr,items,
+  expectKind,nnkExprColonExpr,`[]`,nnkInfix,expectIdent,
+  newCall,ident,toStrLit,newTree,nnkCall
+from strutils import split,replace,join,parseInt
+from algorithm import sort
+from math import `^`,floor
+from tables import toTable,`[]`
+
+
 
 const superScriptMap={'0':"⁰",'1':"¹",'2':"²",'3':"³",'4':"⁴",'5':"⁵",'6':"⁶",'7':"⁷",'8':"⁸",'9':"⁹"}.toTable
-proc readUnit*(u:string):string=
+func readUnit*(u:static[string]):static[string]{.compileTime.}=
   var
     flag=false
     d=0
@@ -30,7 +34,7 @@ proc readUnit*(u:string):string=
         flag=false
       d=0
 
-proc gcd(a,b: int): int =
+func gcd(a,b: int): int {.compileTime.}=
   var (x, y) = (abs a, abs b)
   var n = 0
   while (x and 1) == 0 and (y and 1) == 0:
@@ -45,7 +49,7 @@ proc gcd(a,b: int): int =
       x -= y
       if x == 0:
         return y shl n
-proc simplifyFrac(num:(int,int)):(int,int) =
+func simplifyFrac(num:(int,int)):(int,int) {.compileTime.}=
   if num[0]==0:
     return (0,1)
   let gcdVal=gcd(num[0],num[1])
@@ -53,10 +57,10 @@ proc simplifyFrac(num:(int,int)):(int,int) =
     if num[1]>0:(num[0] div gcdVal,num[1] div gcdVal)
     elif num[1]<0:(-num[0] div gcdVal,-num[1] div gcdVal)
     else: raise newException(ValueError,"Invalid fraction")
-proc fracAdd(a, b: (int, int)): (int, int) =simplifyFrac (a[0]*b[1]+b[0]*a[1],a[1]*b[1])
-proc fracMul(a, b: (int, int)): (int, int) =simplifyFrac (a[0]*b[0],a[1]*b[1])
-proc fracPow[T](a:T, b: (int, int)):T = T(a.float^(b[0].float/b[1].float))
-proc floatToFraction(x: float): (int, int) =
+func fracAdd(a, b: (int, int)): (int, int) {.compileTime.}=simplifyFrac (a[0]*b[1]+b[0]*a[1],a[1]*b[1])
+func fracMul(a, b: (int, int)): (int, int) {.compileTime.}=simplifyFrac (a[0]*b[0],a[1]*b[1])
+func fracPow[T](a:T, b: (int, int)):T{.inline.}= T(a.float^(b[0].float/b[1].float))
+func floatToFraction(x: float): (int, int) {.compileTime.}=
   if x == 0.0:
     return (0, 1)
   let
@@ -96,38 +100,40 @@ proc floatToFraction(x: float): (int, int) =
     if r < 1e-12:
       return (sign * h2.int, k2.int)
 
-
-proc addInUnit(tups:var seq[(string,(int,int))],tup:(string,(int,int))) =
-  if tup[1]==(0,1):return
-  var tr=false
-  var result=newSeq[(string,(int,int))]()
-  for (s,e) in tups:
-    let x = cmp(s,tup[0])
-    if x==0:
-      tr=true
-      if (e.fracAdd tup[1])[0]!=0:
-        result.add (s,e.fracAdd tup[1])
-    elif x<0:
-      result.add (s,e)
+func findInsertIndex(tups: seq[(string, (int, int))], target: string): int {.compileTime.} =
+  var
+    low = 0
+    high = tups.len - 1
+  while low <= high:
+    let mid = (low + high) shr 1
+    let cmpRes = cmp(tups[mid][0], target)
+    if cmpRes == 0:
+      return mid
+    elif cmpRes < 0:
+      low = mid + 1
     else:
-      if not tr:
-        tr=true
-        result.add tup
-      result.add (s,e)
-  if not tr:
-    result.add tup
-  tups=result
-proc delOutUnit(tups:var seq[(string,(int,int))],ss:string) =
-  var result=newSeq[(string,(int,int))]()
-  for (s,e) in tups:
-    if s!=ss:
-      result.add (s,e)
-  tups=result
+      high = mid - 1
+  return low
+func addInUnit(tups: var seq[(string, (int, int))], tup: (string, (int, int))) {.compileTime.} =
+  if tup[1] == (0, 1): return
+  let idx = tups.findInsertIndex(tup[0])
+  if idx < tups.len and tups[idx][0] == tup[0]:
+    let newExp = tups[idx][1].fracAdd(tup[1])
+    if newExp[0] == 0 or newExp[0]/newExp[1]<1e-9:
+      tups.del(idx)
+    else:
+      tups[idx] = (tup[0], newExp)
+  else:
+    tups.insert(tup, idx)
+func delOutUnit(tups: var seq[(string, (int, int))], target: string) {.compileTime.} =
+  let idx = tups.findInsertIndex(target)
+  if idx < tups.len and tups[idx][0] == target:
+    tups.del(idx)
 
 
 type Unit*[T;U:static[string]]=distinct T #轻量单位类型,U为单位
-proc `$`*(arg:Unit):string = $arg.T(arg)&" "&arg.U.readUnit
-proc formatUnitHelper(u:static[string]):static[string] =
+func `$`*(arg:Unit):string{.inline.} = $arg.T(arg)&" "&arg.U.readUnit
+func formatUnitHelper(u:static[string]):static[string] {.compileTime.}=
   let li=u.replace(" ","")
   var
     str=""
@@ -147,7 +153,7 @@ proc formatUnitHelper(u:static[string]):static[string] =
     left=list[0].split'*'
     right=if list.len>1:list[1].split'*' else:newSeq[string]()
   left.join"*"&(if right.len==0:"" else:"//"&right.join"*")
-proc tupUnit(u:static[string]):static[seq[(string,(int,int))]]=
+func tupUnit(u:static[string]):static[seq[(string,(int,int))]]{.compileTime.}=
   let
     list=u.split"//"
     left=list[0].split'*'
@@ -188,9 +194,9 @@ proc tupUnit(u:static[string]):static[seq[(string,(int,int))]]=
             else: raise newException(ValueError, "invalid exponent")
         else:(-1,1)
     result.add (base,exp)
-  proc comTupUnit(a,b:(string,(int,int))):int=cmp a[0],b[0]
+  func comTupUnit(a,b:(string,(int,int))):int=cmp a[0],b[0]
   result.sort comTupUnit
-proc tupToUnit(tups:static[seq[(string,(int,int))]]):static[string] =
+func tupToUnit(tups:static[seq[(string,(int,int))]]):static[string] {.compileTime.}=
   var
     st=newSeq[string]()
     stDiv=newSeq[string]()
@@ -199,17 +205,17 @@ proc tupToUnit(tups:static[seq[(string,(int,int))]]):static[string] =
     elif e[0]==0:continue
     else:stDiv.add s&(if e[0] != -1 or e[1]!=1: "^" & $(-e[0]) & (if e[1]!=1:"/" & $e[1]else:"") else: "")
   st.join("*")&(if stDiv.len>0:"//"&stDiv.join"*" else:"")
-proc formatUnit*(u:static[string]):static[string] =
+func formatUnit*(u:static[string]):static[string]{.compileTime.} =
   let list=u.split"//"
   if list.len>1:u
   else:tupToUnit tupUnit formatUnitHelper u
-proc createUnit*[T](val:T,u:static[string]):Unit[T,formatUnit u]=Unit[T,formatUnit u]val#由string创建单位
-macro `~`*(val,str):Unit =
-  if val is unitx.Unit:
+func createUnit*[T](val:T,u:static[string]):Unit[T,formatUnit u]{.inline.}=Unit[T,formatUnit u]val#由string创建单位
+macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
+  if val is Unit:
     quote do:`val` * createUnit(`val`.T(1),formatUnit astToStr `str`)
   else:
-    quote do:unitx.Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
-proc mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] =
+    quote do:Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
+func mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] {.compileTime.}=
   let
     tupA=tupUnit(a)
     tupB=tupUnit(b)
@@ -235,8 +241,8 @@ proc mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] =
   if cuB!=tupB.len:
     for i in cuB..tupB.len-1:
       result.add tupB[i]
-proc mulUnit(a,b:static[string]):static[string] = tupToUnit mulUnitHelper(a,b)
-proc divUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] =
+func mulUnit(a,b:static[string]):static[string] {.compileTime.}= tupToUnit mulUnitHelper(a,b)
+func divUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] {.compileTime.}=
   let
     tupA=tupUnit(a)
     otupB=tupUnit(b)
@@ -265,21 +271,21 @@ proc divUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] =
   if cuB!=tupB.len:
     for i in cuB..tupB.len-1:
       result.add tupB[i]
-proc divUnit(a,b:static[string]):static[string] = tupToUnit divUnitHelper(a,b)
-proc powerUnitHelper(a:static[string],n:static[(int,int)]):static[seq[(string,(int,int))]] =
+func divUnit(a,b:static[string]):static[string] {.compileTime.}= tupToUnit divUnitHelper(a,b)
+func powerUnitHelper(a:static[string],n:static[(int,int)]):static[seq[(string,(int,int))]] {.compileTime.}=
   let tupA=tupUnit(a)
   for (s,e) in tupA:
     result.add (s,(e[0],e[1]).fracMul n)
-proc powerUnit(a:static[string],n:static[(int,int)]):static[string] = tupToUnit powerUnitHelper(a,n)
-proc deUnit*[T;U:static[string]](u:Unit[T,U]):T=T(u)#获得单位数值
-proc convertUnitHelp(val:static[string],orign:static[string]):static[(int,int)]=
+func powerUnit(a:static[string],n:static[(int,int)]):static[string] {.compileTime.}= tupToUnit powerUnitHelper(a,n)
+func deUnit*[T;U:static[string]](u:Unit[T,U]):T{.inline.}=T(u)#获得单位数值
+func convertUnitHelp(val:static[string],orign:static[string]):static[(int,int)]{.compileTime.}=
   let tup=tupUnit(val)
   for (s,e) in tup:
     if s==orign:
       return e
   return (0,1)
-proc convertUnitHelper(val:static[string],orign:static[string],to:static[string]):
-  static[seq[(string,(int,int))]] =
+func convertUnitHelper(val:static[string],orign:static[string],to:static[string]):
+  static[seq[(string,(int,int))]] {.compileTime.}=
   var tup=tupUnit(val)
   let toer=tupUnit(to)
   let e=convertUnitHelp(val,orign)
@@ -287,8 +293,8 @@ proc convertUnitHelper(val:static[string],orign:static[string],to:static[string]
   for t in toer:
     addInUnit(tup,(t[0],t[1].fracMul e))
   tup
-proc convertUnitInner*[T;U:static[string]](val:Unit[T,U],orign:static[string],to:static[string],factor:static[T]):
-  Unit[T,tupToUnit convertUnitHelper(U,orign,to)]=
+func convertUnitInner*[T;U:static[string]](val:Unit[T,U],orign:static[string],to:static[string],factor:static[T]):
+  Unit[T,tupToUnit convertUnitHelper(U,orign,to)]{.inline.}=
   Unit[T,tupToUnit convertUnitHelper(U,orign,to)] T(val)*factor.fracpow convertUnitHelp(U,orign)
 macro convertUnit*(val,conv):untyped =
   result=val
@@ -300,20 +306,23 @@ macro convertUnit*(val,conv):untyped =
       result = newCall(ident"convertUnitInner",result,toStrLit con[0],newTree(nnkCall,ident"formatUnit",toStrLit con[1][2]),con[1][1])#单位安全转换
 
 
-proc `+`*[T;U:static[string]](l,r:Unit[T,U]):Unit[T,U] = Unit[T,U](T(l)+T(r))
-proc `-`*[T;U:static[string]](l,r:Unit[T,U]):Unit[T,U] = Unit[T,U](T(l)-T(r))
-proc `*`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,mulUnit(U1,U2)]=Unit[T,mulUnit(U1,U2)](T(l)*T(r))
-proc `/`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,divUnit(U1,U2)]=Unit[T,divUnit(U1,U2)](T(l)/T(r))
-proc `*`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]=Unit[T,U](T(l)*r)
-proc `/`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]=Unit[T,U](T(l)/r)
-proc `*`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,U]=Unit[T,U](T(l)*r)
-proc `/`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,powerUnit(U,(-1,1))]=Unit[T,powerUnit(U,(-1,1))](r/T(l))
-proc `^`*[T;U:static[string]](l:Unit[T,U],n:static[(int,int)]):
-  Unit[T,powerUnit(U,n)]=Unit[T,powerUnit(U,n)]T(float(l) ^ (n[0].float/n[1].float))
-proc `^`*[T;U:static[string]](l:Unit[T,U],n:static[int]):
-  Unit[T,powerUnit(U,(n,1))]=Unit[T,powerUnit(U,(n,1))]T(l.float ^ n.float)
-proc `^`*[T;U:static[string]](l:Unit[T,U],n:static[float]):
-  Unit[T,powerUnit(U,floatToFraction(n))]=Unit[T,powerUnit(U,floatToFraction(n))]T(l.float ^ n)
+func `+`*[T;U:static[string]](l,r:Unit[T,U]):Unit[T,U]{.inline.} = Unit[T,U](T(l)+T(r))
+func `-`*[T;U:static[string]](l,r:Unit[T,U]):Unit[T,U]{.inline.} = Unit[T,U](T(l)-T(r))
+func `*`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):
+  Unit[T,mulUnit(U1,U2)]{.inline.}=Unit[T,mulUnit(U1,U2)](T(l)*T(r))
+func `/`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):
+  Unit[T,divUnit(U1,U2)]{.inline.}=Unit[T,divUnit(U1,U2)](T(l)/T(r))
+func `*`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]{.inline.}=Unit[T,U](T(l)*r)
+func `/`*[T;U:static[string]](l:Unit[T,U],r:T):Unit[T,U]{.inline.}=Unit[T,U](T(l)/r)
+func `*`*[T;U:static[string]](r:T,l:Unit[T,U]):Unit[T,U]{.inline.}=Unit[T,U](T(l)*r)
+func `/`*[T;U:static[string]](r:T,l:Unit[T,U]):
+  Unit[T,powerUnit(U,(-1,1))]{.inline.}=Unit[T,powerUnit(U,(-1,1))](r/T(l))
+func `^`*[T;U:static[string]](l:Unit[T,U],n:static[(int,int)]):
+  Unit[T,powerUnit(U,n)]{.inline.}=Unit[T,powerUnit(U,n)]T(float(l) ^ (n[0].float/n[1].float))
+func `^`*[T;U:static[string]](l:Unit[T,U],n:static[int]):
+  Unit[T,powerUnit(U,(n,1))]{.inline.}=Unit[T,powerUnit(U,(n,1))]T(l.float ^ n.float)
+func `^`*[T;U:static[string]](l:Unit[T,U],n:static[float]):
+  Unit[T,powerUnit(U,floatToFraction(n))]{.inline.}=Unit[T,powerUnit(U,floatToFraction(n))]T(l.float ^ n)
 
 
 when isMainModule:
@@ -324,7 +333,7 @@ when isMainModule:
   let length=time*speed
   echo length
   let 电脑=5000.0~元
-  let 生产力=7200.0~元/月
+  let 生产力=7200.0~元/月^(32123/442553)
   let 时间=电脑/生产力
   let 日时间=时间.convertUnit {月:30.0~日}
   echo 日时间
