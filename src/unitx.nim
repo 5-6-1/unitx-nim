@@ -1,17 +1,16 @@
-from macros import quote,
-  newIdentNode,kind,nnkTableConstr,items,
+from macros import quote,eqIdent,newIntLitNode,nnkDotExpr,
+  newIdentNode,kind,nnkTableConstr,items,newFloatLitNode,
   expectKind,nnkExprColonExpr,`[]`,nnkInfix,expectIdent,
   newCall,ident,toStrLit,newTree,nnkCall,nnkStmtList,nnkIdent,
   nnkStaticStmt,newStmtList,`$`,error,add,nnkAsgn,treeRepr,
   nnkBracketExpr,nnkTupleConstr,newStrLitNode,nnkStrLit
-from tables import `[]`,`[]=`,initTable,toTable,contains
+from tables import `[]`,`[]=`,initTable,toTable,contains,Table
 from strutils import split,replace,join,parseInt,contains
 from algorithm import sort
 from math import `^`,floor
-export tables.`[]=`
 
 const superScriptMap={'0':"⁰",'1':"¹",'2':"²",'3':"³",'4':"⁴",'5':"⁵",'6':"⁶",'7':"⁷",'8':"⁸",'9':"⁹"}.toTable
-func readUnit*(u:static[string]):static[string]{.compileTime.}=
+func readUnit(u:static[string]):static[string]{.compileTime.}=
   var
     flag=false
     d=0
@@ -35,8 +34,9 @@ func readUnit*(u:static[string]):static[string]{.compileTime.}=
         flag=false
       d=0
 const siList = ["meter","kilogram","second","ampere","kelvin","mole","candela",""]
-var siTable*{.compileTime.}=initTable[string,(float,string)]()
-var flag*{.compileTime.}=true
+var siTable{.compileTime.}=initTable[string,(float,string)]()
+var unitxSiHasAdded*{.compileTime.}=true
+var unitCreateFlag{.compileTime.}=false
 
 
 
@@ -220,15 +220,15 @@ func delOutUnit(tups: var seq[(string, (int, int))], target: string) {.compileTi
 
 
 
-type Unit*[T;U:static[string]]=distinct T #轻量单位类型,U为单位
+type Unit[T;U:static[string]]=distinct T #轻量单位类型,U为单位
 func `$`*(arg:Unit):string{.inline.} =
   when arg.U=="":
     $arg.T(arg)
   else:
     $arg.T(arg)&" "&arg.U.readUnit
+func unit*[T;U:static[string]](u:Unit[T,U]):static[string]{.inline.}=u.U.readUnit
 converter withNoUnit*[T](x:Unit[T,""]):T=T(x)
 func formatUnitHelper(u:static[string]):static[string] {.compileTime.}=
-
   let li=u.replace(" ","")
   var
     str=""
@@ -304,7 +304,7 @@ func formatUnit*(u:static[string]):static[string]{.compileTime.} =
   let list=u.split"//"
   if list.len>1:u
   else:tupToUnit tupUnit formatUnitHelper u
-func createUnit*[T](val:T,u:static[string]):Unit[T,formatUnit u]{.inline.}=Unit[T,formatUnit u]val#由string创建单位
+func createTheAbsolutelyNewUnit*[T](val:T,u:static[string]):Unit[T,u]{.inline.}=Unit[T,u]val#由string创建单位
 func mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] {.compileTime.}=
   let
     tupA=tupUnit(a)
@@ -369,17 +369,17 @@ func powerUnitHelper(a:static[string],n:static[(int,int)]):static[seq[(string,(i
 func powerUnit(a:static[string],n:static[(int,int)]):static[string] {.compileTime.}= tupToUnit powerUnitHelper(a,n)
 macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
   if val is Unit:
-    quote do:`val` * createUnit(`val`.T(1),formatUnit astToStr `str`)
+    quote do:`val` * createTheAbsolutelyNewUnit(`val`.T(1),formatUnit astToStr `str`)
   elif str.kind==nnkStrLit:
-    quote do:Unit[typeof `val`,`str`] `val`
+    quote do:createTheAbsolutelyNewUnit(`val`,`str`)
   else:
-    quote do:Unit[typeof `val`,formatUnit astToStr `str`] `val`#提供直接创建方法
+    quote do:createTheAbsolutelyNewUnit(`val`,formatUnit astToStr `str`)
 macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
-  let x=powerUnitHelper(str.astToStr.formatUnit,(-1,1))
+  let x=powerUnitHelper(str.astToStr,(-1,1))
   if val is Unit:
-    quote do:`val` * createUnit(`val`.T(1),`x`)
+    quote do:`val` * createTheAbsolutelyNewUnit(`val`.T(1).formatUnit,`x`)
   elif str.kind!=nnkStrLit:
-    quote do:Unit[typeof `val`,`x`] `val`
+    quote do:createTheAbsolutelyNewUnit(formatUnit `val`,`x`)
   else:error "syntax error"
 func deUnit*[T;U:static[string]](u:Unit[T,U]):T{.inline.}=T(u)#获得单位数值
 func convertUnitHelp(val:static[string],orign:static[string]):static[(int,int)]{.compileTime.}=
@@ -405,27 +405,35 @@ macro convertUnit*(val,conv):untyped =
   if conv.kind==nnkTableConstr:
     for con in conv:
       expectKind con, nnkExprColonExpr
-      expectKind con[1],nnkInfix
-      expectIdent con[1][0],"~"
-      var s=toStrLit(con[1][2])
-      if con[1][2].kind==nnkStrLit and con[1][2]==newStrLitNode(""):
-        s=ident""
-      result = newCall(ident"convertUnitInner",result,toStrLit con[0],newTree(nnkCall,ident"formatUnit",s),con[1][1])#单位安全转换
+      if con[1].kind==nnkInfix and con[1][0].eqIdent"~":
+        var s=toStrLit(con[1][2])
+        if con[1][2].kind==nnkStrLit and con[1][2]==newStrLitNode(""):
+          s=ident""
+        result = newCall(ident"convertUnitInner",result,toStrLit con[0],newTree(nnkCall,ident"formatUnit",s),con[1][1])
+      else:
+        var s=toStrLit(con[1])
+        if con[1].kind==nnkStrLit and con[1]==newStrLitNode(""):
+          s=ident""
+        result = newCall(ident"convertUnitInner",result,toStrLit con[0],newTree(nnkCall,ident"formatUnit",s),newCall(newTree(nnkDotExpr,val,ident"T"),newIntLitNode(1)))
 
 
-
+proc addSiUnitInner*(a:static[string],b:static[float],c:static[string]){.compileTime.}=siTable[a]=(b,c)
 macro addSiUnit*(conv):untyped =
-  flag=false
+  unitxSiHasAdded=false
   result=newTree(nnkStaticStmt,newStmtList())
   if conv.kind==nnkTableConstr:
     for con in conv:
       expectKind con, nnkExprColonExpr
-      expectKind con[1],nnkInfix
-      expectIdent con[1][0],"~"
-      if $con[0] in siList:
-        error "can not change si"
-      var s=if con[1][2].kind==nnkStrLit:con[1][2] else:toStrLit(con[1][2])
-      result[0].add newTree(nnkAsgn,newTree(nnkBracketExpr,ident"siTable",toStrLit(con[0])),newTree(nnkTupleConstr,newCall(ident"float",con[1][1]), newCall(ident"formatUnit",s)))
+      if con[1].kind==nnkInfix and eqIdent(con[1][0],"~"):
+        if $con[0] in siList:
+          error "can not change si"
+        var s=if con[1][2].kind==nnkStrLit:con[1][2] else:toStrLit(con[1][2])
+        result[0].add newTree(nnkCall,ident"addSiUnitInner",toStrLit(con[0]),newCall(ident"float",con[1][1]), newCall(ident"formatUnit",s))
+      else:
+        if $con[0] in siList:
+          error "can not change si"
+        var s=if con[1].kind==nnkStrLit:con[1] else:toStrLit(con[1])
+        result[0].add newTree(nnkCall,ident"addSiUnitInner",toStrLit(con[0]),newFloatLitNode(1.0), newCall(ident"formatUnit",s))
   else:
     error "syntax error"
 proc toSimpleSiUnit(s:static[string]):static[(float,seq[(string,(int,int))])]{.compileTime.}=
@@ -466,7 +474,7 @@ func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleS
 
 
 template unitxSi*()=
-  when flag:
+  when unitxSiHasAdded:
     addSiUnit {
 
       # 长度单位
@@ -501,10 +509,10 @@ template unitxSi*()=
       microampere: 1e-6~ampere,
 
       # 温度单位
-      celsius: 1.0~kelvin,  # 用于温度差值
+      celsius: kelvin,  # 用于温度差值
 
       # 衍生力单位
-      newton: 1.0~kilogram*meter/second^2,
+      newton: kilogram*meter/second^2,
       dyne: 1e-5~newton,
       poundforce: 4.4482216152605~newton,
 
@@ -516,60 +524,60 @@ template unitxSi*()=
       kilowatt_hour: 3.6e6~joule,
 
       # 功率单位
-      watt: 1.0~joule/second,
+      watt: joule/second,
       horsepower: 745.69987158227~watt,
 
       # 压力单位
-      pascal: 1.0~newton/meter^2,
+      pascal: newton/meter^2,
       bar: 100000.0~pascal,
       atmosphere: 101325.0~pascal,
       torr: 133.322~pascal,
 
       # 电荷单位
-      coulomb: 1.0~ampere*second,
+      coulomb: ampere*second,
       ampere_hour: 3600.0~coulomb,
 
       # 电位单位
-      volt: 1.0~joule/coulomb,
+      volt: joule/coulomb,
 
       # 电阻单位
-      ohm: 1.0~volt/ampere,
+      ohm: volt/ampere,
 
       # 电容单位
-      farad: 1.0~coulomb/volt,
+      farad: coulomb/volt,
 
       # 磁通量单位
-      weber: 1.0~volt*second,
+      weber: volt*second,
 
       # 磁感应强度单位
-      tesla: 1.0~weber/meter^2,
+      tesla: weber/meter^2,
       gauss: 1e-4~tesla,
 
       # 电感单位
-      henry: 1.0~tesla*meter^2/ampere,
+      henry: tesla*meter^2/ampere,
 
       # 频率单位
-      hertz: 1.0~ / second,
+      hertz: /second,
       kilohertz: 1000.0~hertz,
       megahertz: 1e6~hertz,
 
       # 辐射计量
-      becquerel: 1.0~ / second,
-      gray: 1.0~joule/kilogram,
-      sievert: 1.0~joule/kilogram,
+      becquerel: /second,
+      gray: joule/kilogram,
+      sievert: joule/kilogram,
 
       # 光通量
-      lumen: 1.0~candela*steradian,
+      lumen: candela*steradian,
 
       # 照度
-      lux: 1.0~lumen/meter^2,
+      lux: lumen/meter^2,
 
       # 物质量
       millimole: 0.001~mole,
       micromole: 1e-6~mole,
 
       # 角度单位
-      radian: 1.0~"",  # 无量纲单位
+      radian: "",  # 无量纲单位
       degree: 0.017453292519943~radian,
       arcminute: 0.0002908882086657~radian,
       arcsecond: 4.848136811095e-6~radian,
@@ -577,7 +585,7 @@ template unitxSi*()=
   else:
     static:
       error "please use it at top and only once"
-func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createUnit(f(x.deUnit),x.U)
+func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createTheAbsolutelyNewUnit(f(x.deUnit),x.U)
 
 
 
@@ -633,9 +641,9 @@ when isMainModule:
   let 日时间=时间.convertUnit {月:30.0~日}
   echo 日时间
   addSiUnit {
-    m:1.0~meter,
-    kg:1.0~kilogram,
-    s:1.0~second
+    m:meter,
+    kg:kilogram,
+    s:second
   }
 
   let a=1~m/s
