@@ -8,33 +8,17 @@ Build dimensionally correct physics, finance and astronomy models
 ## Examples
 ```nim
 import unitx
+import unitx/[simphy,physics]
 import math
+
 
 when isMainModule:
   # Define common units in SI base
   addSiUnit {
-    # Metric prefixes
-    km: 1000~meter, cm: 0.01~meter, mm: 0.001~meter,
-    kg: kilogram, g: 0.001~kilogram,
-    ms: 0.001~second, min: 60~second, hr: 3600~second,
-
-    # Scientific units
-    N: kilogram*meter/second^2,      # Newton
-    J: N*meter,                     # Joule
-    W: J/second,                    # Watt
-    Pa: N/meter^2,                   # Pascal
-
-    # Astronomy
-    AU: 149597870700~meter,            # Astronomical Unit
-    ly: 9460730472580800~meter,        # Light-year
-
     # Economics
     USD,          #Directly increase the basic SI unit
     EUR: 0.93~USD,           # Currency
     BTC: 25000~USD, ETH: 1800~USD,     # Crypto
-
-    # Chemistry
-    mol: mole, mmol: 0.001~mole
   }
   echo "==== Physics: Gravitational Potential ===="
   const g = 9.80665~meter/second^2      # Standard gravity
@@ -74,15 +58,7 @@ when isMainModule:
 
   echo "\n==== Astronomy: Cosmic Scales ===="
   # 更精确的单位定义
-  addSiUnit {
-      AU: 149597870700~meter,           # 1 AU = 149,597,870,700 m
-      ly: 9460730472580800~meter,       # 1 ly = 9,460,730,472,580,800 m
-      year: 365.2425~day,             # 天文年 = 365.2425 days
-      day: 24~hour,
-      hour:60~minute,
-      minute:60~second,
-  }
-  let solarSystem = 80.0~AU
+  let solarSystem = 80.0~au
   echo "Solar System diameter: ", (0.0~ly) + solarSystem # 0.0012650005927856527 ly
 
   let andromeda = 2.5e6~ly
