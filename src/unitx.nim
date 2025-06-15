@@ -479,7 +479,14 @@ func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleS
   const t=U.toSimpleSiUnit
   Unit[T,tupToUnit t[1]](s.float*t[0])
 func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createTheAbsolutelyNewUnit(f(x.deUnit),x.U)
-
+func siTo*[T;U:static[string]](x:Unit[T,U],s:static[string]):Unit[T,s]=
+  const
+    lsi=toSimpleSiUnit(U)
+    rsi=toSimpleSiUnit(s)
+    lsistr=tuptoUnit(lsi[1])
+    rsistr=tuptoUnit(rsi[1])
+  when lsistr!=rsistr:error "not same si unit"
+  Unit[T,s](lsi[0]*x.float/rsi[0])
 
 
 func `+`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,U1]{.inline.} =
