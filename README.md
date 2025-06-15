@@ -66,10 +66,10 @@ when isMainModule:
   echo "Andromeda light travel time: ", cosmicTravelTime.convertSimpleSiUnit.siTo "year" #2500000.0000000005 year
 
   echo "\n==== Engineering: Material Strength ===="
-  let beamForce = 500.0~N
-  let beamArea = 0.005~meter^2
+  let beamForce = 500.0~newton
+  let beamArea = 0.005~m^2
   let stress = beamForce / beamArea
-  echo "Material stress: ", stress.convertUnit {N:1.0~pa*meter^2,pa:0.0001~kpa}  # 10.0 kpa
+  echo "Material stress: ", stress.siTo "kPa"  # 10.0 kPa
 
 
   echo 1 ~ ?-?^2*!^(1/3) #any unit  !¹⸍³·?-?²
