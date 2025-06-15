@@ -63,7 +63,7 @@ when isMainModule:
 
   let andromeda = 2.5e6~ly
   let cosmicTravelTime = andromeda / c  # 单位：秒
-  echo "Andromeda light travel time: ", cosmicTravelTime.convertSimpleSiUnit.convertUnit {second: 1/31556952~year} #2500051.3357563815 year
+  echo "Andromeda light travel time: ", cosmicTravelTime.convertSimpleSiUnit.siTo "year" #2500000.0000000005 year
 
   echo "\n==== Engineering: Material Strength ===="
   let beamForce = 500.0~N
@@ -77,7 +77,6 @@ when isMainModule:
   # let invalid = 5~meter + 10~second  # Compile-time error
 
   echo "\n==== Unitx Demonstration Complete ===="
-
 ```
 Perhaps you need to use AI to analyze my 300 lines of lightweight source code
 
