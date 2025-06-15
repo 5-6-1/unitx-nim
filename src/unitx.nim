@@ -8,7 +8,6 @@ from tables import `[]`,`[]=`,initTable,toTable,contains,Table
 from strutils import split,replace,join,parseInt,contains
 from algorithm import sort
 from math import `^`,floor
-from sets import incl,contains,toHashSet
 
 const superScriptMap={'0':"⁰",'1':"¹",'2':"²",'3':"³",'4':"⁴",'5':"⁵",'6':"⁶",'7':"⁷",'8':"⁸",'9':"⁹"}.toTable
 func readUnit(u:static[string]):static[string]{.compileTime.}=
@@ -34,7 +33,7 @@ func readUnit(u:static[string]):static[string]{.compileTime.}=
         result.add c
         flag=false
       d=0
-var siSeq{.compileTime.} = toHashSet [""]
+var siseq{.compileTime.} = @[""]
 var siTable{.compileTime.}=initTable[string,(float,string)]()
 var unitxSiHasAdded*{.compileTime.}=true
 
@@ -110,14 +109,14 @@ template isSimpleSiUnittemp(s)=
     var ans=true
     let tup=tupUnitTemp s
     for (a,b) in tup:
-      if not (a in siSeq):
+      if not (a in siseq):
         ans=false
         break
     ans
 
 
 
-func gcd(a,b: int): int {.compileTime.}=
+func gcd(a,b:int):int=
   var (x, y) = (abs a, abs b)
   var n = 0
   while (x and 1) == 0 and (y and 1) == 0:
@@ -132,7 +131,7 @@ func gcd(a,b: int): int {.compileTime.}=
       x -= y
       if x == 0:
         return y shl n
-func simplifyFrac(num:(int,int)):(int,int) {.compileTime.}=
+func simplifyFrac(num:(int,int)):(int,int)=
   if num[0]==0:
     return (0,1)
   let gcdVal=gcd(num[0],num[1])
@@ -226,7 +225,52 @@ func `$`*(arg:Unit):string{.inline.} =
     $arg.T(arg)
   else:
     $arg.T(arg)&" "&arg.U.readUnit
-func unit*[T;U:static[string]](u:Unit[T,U]):static[string]{.inline.}=u.U.readUnit
+template unit*[T;U:static[string]](u:Unit[T,U]):untyped=unitInner(U)
+func unitInner*(u:static[string]):static[string]{.compileTime.}=
+  let
+    list=u.split"//"
+    left=if u.contains"//"and list.len==1:newSeq[string]() else:list[0].split'*'
+    right=if list.len>1:list[1].split'*' elif u.contains"//":list[0].split'*' else:newSeq[string]()
+  var
+    ltup=newSeq[string]()
+    rtup=newSeq[string]()
+  for l in left:
+    let
+      llist=l.split"^"
+      base=llist[0]
+    if llist.len>1:
+      let nlist=llist[1].split"/"
+      let x=nlist[0].parseInt
+      if x==0: continue
+      if nlist.len==1:
+        ltup.add base&"^" & $x
+      else:
+        let y=nlist[1].parseInt
+        let (a,b)=
+          if y>0: simplifyFrac (x,y)
+          elif y<0: simplifyFrac (-x,-y)
+          else: raise newException(ValueError, "invalid exponent")
+        ltup.add base&"^(" & $a & "/" & $b&")"
+    else:ltup.add base
+  for l in right:
+    let
+      rlist=l.split"^"
+      base=rlist[0]
+    if rlist.len>1:
+      let nlist=rlist[1].split"/"
+      let x=nlist[0].parseInt
+      if x==0: continue
+      if nlist.len==1:
+        rtup.add base&"^" & $x
+      else:
+        let y=nlist[1].parseInt
+        let (a,b)=
+          if y>0: simplifyFrac (x,y)
+          elif y<0: simplifyFrac (-x,-y)
+          else: raise newException(ValueError, "invalid exponent")
+        rtup.add base&"^(" & $a & "/" & $b&")"
+    else:rtup.add base
+  ltup.join"*"&(if list.len==1:""else:"/"&rtup.join"*")
 converter withNoUnit*[T](x:Unit[T,""]):T=T(x)
 func formatUnitHelper(u:static[string]):static[string] {.compileTime.}=
   let li=u.replace(" ","")
@@ -370,10 +414,10 @@ func powerUnit(a:static[string],n:static[(int,int)]):static[string] {.compileTim
 macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
   if val is Unit:
     quote do:`val` * createTheAbsolutelyNewUnit(`val`.T(1),formatUnit astToStr `str`)
-  elif str.kind==nnkStrLit:
-    quote do:createTheAbsolutelyNewUnit(`val`,toStrLit(""))#字符串下仅支持空单位
-  else:
+  elif str.kind!=nnkStrLit:
     quote do:createTheAbsolutelyNewUnit(`val`,formatUnit astToStr `str`)
+  else:
+    quote do:createTheAbsolutelyNewUnit(`val`,toStrLit(""))#字符串下仅支持空单位
 macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
   let x=powerUnitHelper(str.astToStr,(-1,1))
   if val is Unit:
@@ -418,7 +462,7 @@ macro convertUnit*(val,conv):untyped =
 
 
 proc addSiUnitInner*(a:static[string],b:static[float],c:static[string]){.compileTime.}=siTable[a]=(b,c)
-proc addSimpleSiUnit*(s:static[string])=siSeq.incl s
+proc addSimpleSiUnit*(s:static[string])=siseq.add s
 macro addSiUnit*(conv):untyped =
   unitxSiHasAdded=false
   result=newTree(nnkStaticStmt,newStmtList())
@@ -426,17 +470,17 @@ macro addSiUnit*(conv):untyped =
     for con in conv:
       if con.kind == nnkExprColonExpr:
         if con[1].kind==nnkInfix and eqIdent(con[1][0],"~"):
-          if $con[0] in siSeq:
+          if $con[0] in siseq:
             error "can not change si"
           var s=if con[1][2].kind==nnkStrLit:con[1][2] else:toStrLit(con[1][2])
           result[0].add newCall(ident"addSiUnitInner",toStrLit(con[0]),newCall(ident"float",con[1][1]), newCall(ident"formatUnit",s))
         else:
-          if $con[0] in siSeq:
+          if $con[0] in siseq:
             error "can not change si"
           var s=if con[1].kind==nnkStrLit:con[1] else:toStrLit(con[1])
           result[0].add newCall(ident"addSiUnitInner",toStrLit(con[0]),newFloatLitNode(1.0), newCall(ident"formatUnit",s))
       elif con.kind==nnkIdent:
-        if $con in siSeq:
+        if $con in siseq:
           error "Duplicate si unit"
         result[0].add newCall(ident"addSimpleSiUnit",toStrLit con)
       else:
@@ -479,14 +523,14 @@ func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleS
   const t=U.toSimpleSiUnit
   Unit[T,tupToUnit t[1]](s.float*t[0])
 func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createTheAbsolutelyNewUnit(f(x.deUnit),x.U)
-func siTo*[T;U:static[string]](x:Unit[T,U],s:static[string]):Unit[T,s]=
+func siTo*[T;U:static[string]](x:Unit[T,U],s:static[string]):Unit[T,formatUnit s]=
   const
     lsi=toSimpleSiUnit(U)
-    rsi=toSimpleSiUnit(s)
+    rsi=toSimpleSiUnit(formatUnit s)
     lsistr=tuptoUnit(lsi[1])
     rsistr=tuptoUnit(rsi[1])
   when lsistr!=rsistr:error "not same si unit"
-  Unit[T,s](lsi[0]*x.float/rsi[0])
+  Unit[T,formatUnit s](lsi[0]*x.float/rsi[0])
 
 
 func `+`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,U1]{.inline.} =
