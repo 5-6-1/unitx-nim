@@ -33,10 +33,9 @@ func readUnit(u:static[string]):static[string]{.compileTime.}=
         result.add c
         flag=false
       d=0
-const siList = ["meter","kilogram","second","ampere","kelvin","mole","candela",""]
+var siList{.compileTime.} = @["meter","kilogram","second","ampere","kelvin","mole","candela",""]
 var siTable{.compileTime.}=initTable[string,(float,string)]()
 var unitxSiHasAdded*{.compileTime.}=true
-var unitCreateFlag{.compileTime.}=false
 
 
 
@@ -418,22 +417,30 @@ macro convertUnit*(val,conv):untyped =
 
 
 proc addSiUnitInner*(a:static[string],b:static[float],c:static[string]){.compileTime.}=siTable[a]=(b,c)
+proc addSimpleSiUnit*(s:static[string])=
+  siList.add s
 macro addSiUnit*(conv):untyped =
   unitxSiHasAdded=false
   result=newTree(nnkStaticStmt,newStmtList())
   if conv.kind==nnkTableConstr:
     for con in conv:
-      expectKind con, nnkExprColonExpr
-      if con[1].kind==nnkInfix and eqIdent(con[1][0],"~"):
-        if $con[0] in siList:
-          error "can not change si"
-        var s=if con[1][2].kind==nnkStrLit:con[1][2] else:toStrLit(con[1][2])
-        result[0].add newTree(nnkCall,ident"addSiUnitInner",toStrLit(con[0]),newCall(ident"float",con[1][1]), newCall(ident"formatUnit",s))
+      if con.kind == nnkExprColonExpr:
+        if con[1].kind==nnkInfix and eqIdent(con[1][0],"~"):
+          if $con[0] in siList:
+            error "can not change si"
+          var s=if con[1][2].kind==nnkStrLit:con[1][2] else:toStrLit(con[1][2])
+          result[0].add newCall(ident"addSiUnitInner",toStrLit(con[0]),newCall(ident"float",con[1][1]), newCall(ident"formatUnit",s))
+        else:
+          if $con[0] in siList:
+            error "can not change si"
+          var s=if con[1].kind==nnkStrLit:con[1] else:toStrLit(con[1])
+          result[0].add newCall(ident"addSiUnitInner",toStrLit(con[0]),newFloatLitNode(1.0), newCall(ident"formatUnit",s))
+      elif con.kind==nnkIdent:
+        if $con in siList:
+          error "Duplicate si unit"
+        result[0].add newCall(ident"addSimpleSiUnit",toStrLit con)
       else:
-        if $con[0] in siList:
-          error "can not change si"
-        var s=if con[1].kind==nnkStrLit:con[1] else:toStrLit(con[1])
-        result[0].add newTree(nnkCall,ident"addSiUnitInner",toStrLit(con[0]),newFloatLitNode(1.0), newCall(ident"formatUnit",s))
+        error "syntax error"
   else:
     error "syntax error"
 proc toSimpleSiUnit(s:static[string]):static[(float,seq[(string,(int,int))])]{.compileTime.}=
@@ -467,7 +474,7 @@ proc toSimpleSiUnit(s:static[string]):static[(float,seq[(string,(int,int))])]{.c
   let jud=isSimpleSiUnittemp temp1
   if jud:(num,tup)
   else:error "not si unit"
-func convertSimpleSiUnitHelp(s:static[string]):static[string]{.compileTime.}=tupToUnit toSimpleSiUnit(s)[1]
+proc convertSimpleSiUnitHelp(s:static[string]):static[string]{.compileTime.}=tupToUnit toSimpleSiUnit(s)[1]
 func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleSiUnitHelp(U)]{.inline.}=
   const t=U.toSimpleSiUnit
   Unit[T,tupToUnit t[1]](s.float*t[0])
