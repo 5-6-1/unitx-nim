@@ -1,5 +1,5 @@
 from ../unitx import addSiUnit, addSimpleSiUnit, addSiUnitInner, formatUnit
-
+{.used.}
 # 简写单位系统（兼容全称）
 addSiUnit {
   # ============== 基本单位简写 ==============
