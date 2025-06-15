@@ -1,4 +1,5 @@
 from ../unitx import addSiUnit,addSimpleSiUnit,addSiUnitInner,formatUnit
+{.used.}
 addSiUnit {
   # 国际单位制基本单位（7个）
   ampere,                  # 安培 - 电流
