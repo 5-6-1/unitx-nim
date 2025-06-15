@@ -8,6 +8,7 @@ from tables import `[]`,`[]=`,initTable,toTable,contains,Table
 from strutils import split,replace,join,parseInt,contains
 from algorithm import sort
 from math import `^`,floor
+from sets import incl,contains,toHashSet
 
 const superScriptMap={'0':"⁰",'1':"¹",'2':"²",'3':"³",'4':"⁴",'5':"⁵",'6':"⁶",'7':"⁷",'8':"⁸",'9':"⁹"}.toTable
 func readUnit(u:static[string]):static[string]{.compileTime.}=
@@ -33,7 +34,7 @@ func readUnit(u:static[string]):static[string]{.compileTime.}=
         result.add c
         flag=false
       d=0
-var siList{.compileTime.} = @["meter","kilogram","second","ampere","kelvin","mole","candela",""]
+var siSeq{.compileTime.} = toHashSet [""]
 var siTable{.compileTime.}=initTable[string,(float,string)]()
 var unitxSiHasAdded*{.compileTime.}=true
 
@@ -109,7 +110,7 @@ template isSimpleSiUnittemp(s)=
     var ans=true
     let tup=tupUnitTemp s
     for (a,b) in tup:
-      if not (a in siList):
+      if not (a in siSeq):
         ans=false
         break
     ans
@@ -370,7 +371,7 @@ macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
   if val is Unit:
     quote do:`val` * createTheAbsolutelyNewUnit(`val`.T(1),formatUnit astToStr `str`)
   elif str.kind==nnkStrLit:
-    quote do:createTheAbsolutelyNewUnit(`val`,`str`)
+    quote do:createTheAbsolutelyNewUnit(`val`,toStrLit(""))#字符串下仅支持空单位
   else:
     quote do:createTheAbsolutelyNewUnit(`val`,formatUnit astToStr `str`)
 macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
@@ -417,8 +418,7 @@ macro convertUnit*(val,conv):untyped =
 
 
 proc addSiUnitInner*(a:static[string],b:static[float],c:static[string]){.compileTime.}=siTable[a]=(b,c)
-proc addSimpleSiUnit*(s:static[string])=
-  siList.add s
+proc addSimpleSiUnit*(s:static[string])=siSeq.incl s
 macro addSiUnit*(conv):untyped =
   unitxSiHasAdded=false
   result=newTree(nnkStaticStmt,newStmtList())
@@ -426,17 +426,17 @@ macro addSiUnit*(conv):untyped =
     for con in conv:
       if con.kind == nnkExprColonExpr:
         if con[1].kind==nnkInfix and eqIdent(con[1][0],"~"):
-          if $con[0] in siList:
+          if $con[0] in siSeq:
             error "can not change si"
           var s=if con[1][2].kind==nnkStrLit:con[1][2] else:toStrLit(con[1][2])
           result[0].add newCall(ident"addSiUnitInner",toStrLit(con[0]),newCall(ident"float",con[1][1]), newCall(ident"formatUnit",s))
         else:
-          if $con[0] in siList:
+          if $con[0] in siSeq:
             error "can not change si"
           var s=if con[1].kind==nnkStrLit:con[1] else:toStrLit(con[1])
           result[0].add newCall(ident"addSiUnitInner",toStrLit(con[0]),newFloatLitNode(1.0), newCall(ident"formatUnit",s))
       elif con.kind==nnkIdent:
-        if $con in siList:
+        if $con in siSeq:
           error "Duplicate si unit"
         result[0].add newCall(ident"addSimpleSiUnit",toStrLit con)
       else:
@@ -478,120 +478,6 @@ proc convertSimpleSiUnitHelp(s:static[string]):static[string]{.compileTime.}=tup
 func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleSiUnitHelp(U)]{.inline.}=
   const t=U.toSimpleSiUnit
   Unit[T,tupToUnit t[1]](s.float*t[0])
-
-
-template unitxSi*()=
-  when unitxSiHasAdded:
-    addSiUnit {
-
-      # 长度单位
-      kilometer: 1000.0~meter,
-      decimeter: 0.1~meter,
-      centimeter: 0.01~meter,
-      millimeter: 0.001~meter,
-      micrometer: 1e-6~meter,
-      nanometer: 1e-9~meter,
-      picometer: 1e-12~meter,
-      femtometer: 1e-15~meter,
-      astronomicalunit: 149597870700.0~meter,  # 天文单位
-      lightyear: 9460730472580800.0~meter,    # 光年
-
-      # 质量单位
-      gram: 0.001~kilogram,
-      milligram: 1e-6~kilogram,
-      microgram: 1e-9~kilogram,
-      ton: 1000.0~kilogram,
-
-      # 时间单位
-      millisecond: 0.001~second,
-      microsecond: 1e-6~second,
-      nanosecond: 1e-9~second,
-      minute: 60.0~second,
-      hour: 3600.0~second,
-      day: 86400.0~second,
-      year: 31557600.0~second,  # 儒略年
-
-      # 电流单位
-      milliampere: 0.001~ampere,
-      microampere: 1e-6~ampere,
-
-      # 温度单位
-      celsius: kelvin,  # 用于温度差值
-
-      # 衍生力单位
-      newton: kilogram*meter/second^2,
-      dyne: 1e-5~newton,
-      poundforce: 4.4482216152605~newton,
-
-      # 能量单位
-      joule: 1.0~newton*meter,
-      calorie: 4.184~joule,
-      kilocalorie: 4184.0~joule,
-      electronvolt: 1.602176634e-19~joule,
-      kilowatt_hour: 3.6e6~joule,
-
-      # 功率单位
-      watt: joule/second,
-      horsepower: 745.69987158227~watt,
-
-      # 压力单位
-      pascal: newton/meter^2,
-      bar: 100000.0~pascal,
-      atmosphere: 101325.0~pascal,
-      torr: 133.322~pascal,
-
-      # 电荷单位
-      coulomb: ampere*second,
-      ampere_hour: 3600.0~coulomb,
-
-      # 电位单位
-      volt: joule/coulomb,
-
-      # 电阻单位
-      ohm: volt/ampere,
-
-      # 电容单位
-      farad: coulomb/volt,
-
-      # 磁通量单位
-      weber: volt*second,
-
-      # 磁感应强度单位
-      tesla: weber/meter^2,
-      gauss: 1e-4~tesla,
-
-      # 电感单位
-      henry: tesla*meter^2/ampere,
-
-      # 频率单位
-      hertz: /second,
-      kilohertz: 1000.0~hertz,
-      megahertz: 1e6~hertz,
-
-      # 辐射计量
-      becquerel: /second,
-      gray: joule/kilogram,
-      sievert: joule/kilogram,
-
-      # 光通量
-      lumen: candela*steradian,
-
-      # 照度
-      lux: lumen/meter^2,
-
-      # 物质量
-      millimole: 0.001~mole,
-      micromole: 1e-6~mole,
-
-      # 角度单位
-      radian: "",  # 无量纲单位
-      degree: 0.017453292519943~radian,
-      arcminute: 0.0002908882086657~radian,
-      arcsecond: 4.848136811095e-6~radian,
-    }
-  else:
-    static:
-      error "please use it at top and only once"
 func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createTheAbsolutelyNewUnit(f(x.deUnit),x.U)
 
 
@@ -633,31 +519,3 @@ func `^`*[T;U:static[string]](l:Unit[T,U],n:static[int]):
   Unit[T,powerUnit(U,(n,1))]{.inline.}=Unit[T,powerUnit(U,(n,1))]T(l.float ^ n.float)
 func `^`*[T;U:static[string]](l:Unit[T,U],n:static[float]):
   Unit[T,powerUnit(U,floatToFraction(n))]{.inline.}=Unit[T,powerUnit(U,floatToFraction(n))]T(l.float ^ n)
-
-
-when isMainModule:
-  let high=3.0~m
-  let speed=5.0~m/s
-  const g=9.8~m/s^2
-  let time=(high/g*2)^0.5
-  let length=time*speed
-  echo length
-  let 电脑=5000.0~元
-  let 生产力=7200.0~元/月^(32123/442553)
-  let 时间=电脑/生产力
-  let 日时间=时间.convertUnit {月:30.0~日}
-  echo 日时间
-  addSiUnit {
-    m:meter,
-    kg:kilogram,
-    s:second
-  }
-
-  let a=1~m/s
-  let b=3~meter/second
-  echo a+b
-  echo (a+b).convertSimpleSiUnit
-
-  echo a.U
-  echo a.U.toSimpleSiUnit[1].tuptoUnit.readUnit
-  echo a.U.toSimpleSiUnit[0]
