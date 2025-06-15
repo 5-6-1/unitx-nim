@@ -9,30 +9,32 @@ Build dimensionally correct physics, finance and astronomy models
 ```nim
 import unitx
 import math
+
+
 when isMainModule:
   # Define common units in SI base
   addSiUnit {
     # Metric prefixes
     km: 1000~meter, cm: 0.01~meter, mm: 0.001~meter,
-    kg: 1~kilogram, g: 0.001~kilogram,
+    kg: kilogram, g: 0.001~kilogram,
     ms: 0.001~second, min: 60~second, hr: 3600~second,
 
     # Scientific units
-    N: 1~kilogram*meter/second^2,      # Newton
-    J: 1~N*meter,                     # Joule
-    W: 1~J/second,                    # Watt
-    Pa: 1~N/meter^2,                   # Pascal
+    N: kilogram*meter/second^2,      # Newton
+    J: N*meter,                     # Joule
+    W: J/second,                    # Watt
+    Pa: N/meter^2,                   # Pascal
 
     # Astronomy
     AU: 149597870700~meter,            # Astronomical Unit
     ly: 9460730472580800~meter,        # Light-year
 
     # Economics
-    USD: 1~"", EUR: 0.93~USD,           # Currency
+    USD: "", EUR: 0.93~USD,           # Currency
     BTC: 25000~USD, ETH: 1800~USD,     # Crypto
 
     # Chemistry
-    mol: 1~mole, mmol: 0.001~mole
+    mol: mole, mmol: 0.001~mole
   }
   echo "==== Physics: Gravitational Potential ===="
   const g = 9.80665~meter/second^2      # Standard gravity
@@ -75,7 +77,10 @@ when isMainModule:
   addSiUnit {
       AU: 149597870700~meter,           # 1 AU = 149,597,870,700 m
       ly: 9460730472580800~meter,       # 1 ly = 9,460,730,472,580,800 m
-      year: 31556952~second             # 天文年 = 365.2425 days
+      year: 365.2425~day,             # 天文年 = 365.2425 days
+      day: 24~hour,
+      hour:60~minute,
+      minute:60~second,
   }
   let solarSystem = 80.0~AU
   echo "Solar System diameter: ", (0.0~ly) + solarSystem # 0.0012650005927856527 ly
@@ -90,6 +95,8 @@ when isMainModule:
   let stress = beamForce / beamArea
   echo "Material stress: ", stress.convertUnit {N:1.0~pa*meter^2,pa:0.0001~kpa}  # 10.0 kpa
 
+
+  echo 1 ~ ?-?^2*!^(1/3) #any unit  !¹⸍³·?-?²
   # Automatic dimension checking (commented to run)
   # let invalid = 5~meter + 10~second  # Compile-time error
 
