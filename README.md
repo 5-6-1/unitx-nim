@@ -10,7 +10,6 @@ Build dimensionally correct physics, finance and astronomy models
 import unitx
 import math
 
-
 when isMainModule:
   # Define common units in SI base
   addSiUnit {
@@ -30,7 +29,8 @@ when isMainModule:
     ly: 9460730472580800~meter,        # Light-year
 
     # Economics
-    USD: "", EUR: 0.93~USD,           # Currency
+    USD,          #Directly increase the basic SI unit
+    EUR: 0.93~USD,           # Currency
     BTC: 25000~USD, ETH: 1800~USD,     # Crypto
 
     # Chemistry
