@@ -1,9 +1,12 @@
-# unitx-nim
+# UnitX: One System, All Measurements
 
-Zero-cost unit safety | Compile-time algebra | Fractional exponents
+Universal Unit Safety​
+Zero-Cost • Compile-Time • Fractional Exponents
 
-Build dimensionally correct physics, finance and astronomy models
-
+1. Compile-Time Validation
+2. Fractional Exponents: m^(3/2)
+3. Zero Runtime Overhead
+4. Cross-Domain Consistency
 
 ## Examples
 ```nim
