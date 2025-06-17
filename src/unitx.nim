@@ -219,12 +219,20 @@ func delOutUnit(tups: var seq[(string, (int, int))], target: string) {.compileTi
 
 
 
-type Unit[T;U:static[string]]=distinct T #轻量单位类型,U为单位
+type
+  Utype* = static[string]
+  Unit[T;U:UType]=distinct T #轻量单位类型,U为单位
+
+
 func `$`*(arg:Unit):string{.inline.} =
   when arg.U=="":
     $arg.T(arg)
   else:
     $arg.T(arg)&" "&arg.U.readUnit
+
+
+
+
 template unit*[T;U:static[string]](u:Unit[T,U]):untyped=unitInner(U)
 func unitInner*(u:static[string]):static[string]{.compileTime.}=
   let
@@ -417,7 +425,7 @@ macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
   elif str.kind!=nnkStrLit:
     quote do:createTheAbsolutelyNewUnit(`val`,formatUnit astToStr `str`)
   else:
-    quote do:createTheAbsolutelyNewUnit(`val`,toStrLit(""))#字符串下仅支持空单位
+    quote do:createTheAbsolutelyNewUnit(`val`,toStrLit(""))#除了空单位应该不使用字符串
 macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
   let x=powerUnitHelper(str.astToStr,(-1,1))
   if val is Unit:
@@ -533,6 +541,14 @@ func siTo*[T;U:static[string]](x:Unit[T,U],s:static[string]):Unit[T,formatUnit s
   Unit[T,formatUnit s](lsi[0]*x.float/rsi[0])
 
 
+type USi*[T;U:UType]=concept u
+  u is Unit
+  u.T is T
+  when U.formatUnit!=u.U:
+    const usiU = tupToUnit (toSimpleSiUnit formatUnit U)[1]
+    const siU = tupToUnit (toSimpleSiUnit u.U)[1]
+    usiU==siU
+
 func `+`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,U1]{.inline.} =
   when U1==U2:
     Unit[T,U1](T(l)+T(r))
@@ -570,3 +586,8 @@ func `^`*[T;U:static[string]](l:Unit[T,U],n:static[int]):
   Unit[T,powerUnit(U,(n,1))]{.inline.}=Unit[T,powerUnit(U,(n,1))]T(l.float ^ n.float)
 func `^`*[T;U:static[string]](l:Unit[T,U],n:static[float]):
   Unit[T,powerUnit(U,floatToFraction(n))]{.inline.}=Unit[T,powerUnit(U,floatToFraction(n))]T(l.float ^ n)
+
+
+
+
+
