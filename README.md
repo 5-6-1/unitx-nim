@@ -14,7 +14,6 @@ import unitx
 import unitx/[simphy,physics]
 import math
 
-
 when isMainModule:
   # Define common units in SI base
   addSiUnit {
@@ -26,11 +25,14 @@ when isMainModule:
   echo "==== Physics: Gravitational Potential ===="
   const g = 9.80665~meter/second^2      # Standard gravity
   let height = 100.0~meter
-  let fallTime = (2.0 * height / g)^0.5
+  proc getTime[T](h:USi[T,"m"],g:USi[T,"m/s^2"]):USi[T,"s"]=(T(2)*h/g)^0.5
+
+  let fallTime = getTime(height,g)
+
   echo "Fall time: ", fallTime          # 4.5160075575178755 second
 
   let impactEnergy = height * (75.0~kilogram) * g  # Weight = 75kg
-  echo "Impact energy: ", impactEnergy.convertSimpleSiUnit  # 73549.875 kilogram·meter²/second²
+  echo "Impact energy: ", impactEnergy.siTo"kg*m^2/s^2"  # 73549.875 kilogram·meter²/second²
 
   echo "\n==== Quantum Physics: Photon Energy ===="
   const
@@ -66,7 +68,7 @@ when isMainModule:
 
   let andromeda = 2.5e6~ly
   let cosmicTravelTime = andromeda / c  # 单位：秒
-  echo "Andromeda light travel time: ", cosmicTravelTime.convertSimpleSiUnit.siTo "year" #2500000.0000000005 year
+  echo "Andromeda light travel time: ", cosmicTravelTime.siTo "year" #2500000.0000000005 year
 
   echo "\n==== Engineering: Material Strength ===="
   let beamForce = 500.0~newton
