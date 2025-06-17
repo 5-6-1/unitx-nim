@@ -33,9 +33,13 @@ func readUnit(u:static[string]):static[string]{.compileTime.}=
         result.add c
         flag=false
       d=0
+
+
+
+# Système Internal d'Unités
+
 var siseq{.compileTime.} = @[""]
 var siTable{.compileTime.}=initTable[string,(float,string)]()
-var unitxSiHasAdded*{.compileTime.}=true
 
 
 
@@ -233,7 +237,13 @@ func `$`*(arg:Unit):string{.inline.} =
 
 
 
-template unit*[T;U:static[string]](u:Unit[T,U]):untyped=unitInner(U)
+template unit*[T;U:static[string]](u:Unit[T,U]):untyped=
+  runnableExamples:
+    let x=1~kg*m^(1/2)/s^2
+    echo x.unit
+    # kg*m^1/2//s^2
+    #生成Unit内部字符串
+  unitInner(U)
 func unitInner*(u:static[string]):static[string]{.compileTime.}=
   let
     list=u.split"//"
@@ -356,7 +366,11 @@ func formatUnit*(u:static[string]):static[string]{.compileTime.} =
   let list=u.split"//"
   if list.len>1:u
   else:tupToUnit tupUnit formatUnitHelper u
-func createTheAbsolutelyNewUnit*[T](val:T,u:static[string]):Unit[T,u]{.inline.}=Unit[T,u]val#由string创建单位
+func newUnit*[T](val:T,u:static[string]):Unit[T,u]{.inline.}=
+  runnableExamples:
+    let speed=1~m/s
+    let speed2=(2*speed.deUnit).newUnit speed.unit
+  Unit[T,u]val
 func mulUnitHelper(a,b:static[string]):static[seq[(string,(int,int))]] {.compileTime.}=
   let
     tupA=tupUnit(a)
@@ -420,18 +434,26 @@ func powerUnitHelper(a:static[string],n:static[(int,int)]):static[seq[(string,(i
     result.add (s,(e[0],e[1]).fracMul n)
 func powerUnit(a:static[string],n:static[(int,int)]):static[string] {.compileTime.}= tupToUnit powerUnitHelper(a,n)
 macro `~`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
+  runnableExamples:
+    let length=10~m
+    let value=1~""  #字符串仅可生成空单位
+    # Unit[int,""]
   if val is Unit:
-    quote do:`val` * createTheAbsolutelyNewUnit(`val`.T(1),formatUnit astToStr `str`)
+    quote do:`val` * newUnit(`val`.T(1),formatUnit astToStr `str`)
   elif str.kind!=nnkStrLit:
-    quote do:createTheAbsolutelyNewUnit(`val`,formatUnit astToStr `str`)
+    quote do:newUnit(`val`,formatUnit astToStr `str`)
   else:
-    quote do:createTheAbsolutelyNewUnit(`val`,toStrLit(""))#除了空单位应该不使用字符串
+    quote do:newUnit(`val`,toStrLit(""))#除了空单位不应该使用字符串作为右参数
 macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
+  runnableExamples:
+    let f=1~/s
+    let f0=1 ~ /s
+    #equal
   let x=powerUnitHelper(str.astToStr,(-1,1))
   if val is Unit:
-    quote do:`val` * createTheAbsolutelyNewUnit(`val`.T(1).formatUnit,`x`)
+    quote do:`val` * newUnit(`val`.T(1).formatUnit,`x`)
   elif str.kind!=nnkStrLit:
-    quote do:createTheAbsolutelyNewUnit(formatUnit `val`,`x`)
+    quote do:newUnit(formatUnit `val`,`x`)
   else:error "syntax error"
 func deUnit*[T;U:static[string]](u:Unit[T,U]):T{.inline.}=T(u)#获得单位数值
 func convertUnitHelp(val:static[string],orign:static[string]):static[(int,int)]{.compileTime.}=
@@ -453,6 +475,14 @@ func convertUnitInner*[T;U:static[string]](val:Unit[T,U],orign:static[string],to
   Unit[T,tupToUnit convertUnitHelper(U,orign,to)]{.inline.}=
   Unit[T,tupToUnit convertUnitHelper(U,orign,to)] T(val)*factor.fracpow convertUnitHelp(U,orign)
 macro convertUnit*(val,conv):untyped =
+  runnableExamples:
+    let x=1.0~km/h
+    echo x.convertUnit {
+      km:1000.0~m,
+      h:60.0~min,
+      min:50.0~s,
+      s: /hz
+    }
   result=val
   if conv.kind==nnkTableConstr:
     for con in conv:
@@ -472,7 +502,19 @@ macro convertUnit*(val,conv):untyped =
 proc addSiUnitInner*(a:static[string],b:static[float],c:static[string]){.compileTime.}=siTable[a]=(b,c)
 proc addSimpleSiUnit*(s:static[string])=siseq.add s
 macro addSiUnit*(conv):untyped =
-  unitxSiHasAdded=false
+  runnableExamples:
+    addSiUnit {
+      meter,
+      second,             #基本单位
+      kilogram,
+      m:meter,
+      s:second,
+      kg:kilogram,        #相同单位
+      N:kg*m/s^2,
+      minute:60~s,
+      hour:60~minute,     #单位与转换因子
+      cm:0.01~m
+    }
   result=newTree(nnkStaticStmt,newStmtList())
   if conv.kind==nnkTableConstr:
     for con in conv:
@@ -530,8 +572,12 @@ proc convertSimpleSiUnitHelp(s:static[string]):static[string]{.compileTime.}=tup
 func convertSimpleSiUnit*[T;U:static[string]](s:Unit[T,U]):Unit[T,convertSimpleSiUnitHelp(U)]{.inline.}=
   const t=U.toSimpleSiUnit
   Unit[T,tupToUnit t[1]](s.float*t[0])
-func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=createTheAbsolutelyNewUnit(f(x.deUnit),x.U)
+func doUnitInner*[T,TT;U:static[string]](x:Unit[T,U],f:proc(a:T):TT):Unit[TT,U]=newUnit(f(x.deUnit),x.U)
 func siTo*[T;U:static[string]](x:Unit[T,U],s:static[string]):Unit[T,formatUnit s]=
+  runnableExamples:
+    let x=1.0~kilogram/second
+    echo x.siTo "gram/hour"
+    #3600000.0000000005 gram/hour
   const
     lsi=toSimpleSiUnit(U)
     rsi=toSimpleSiUnit(formatUnit s)
@@ -542,6 +588,11 @@ func siTo*[T;U:static[string]](x:Unit[T,U],s:static[string]):Unit[T,formatUnit s
 
 
 type USi*[T;U:UType]=concept u
+  runnableExamples:
+    const g = 9.80665~meter/second^2      # Standard gravity
+    let height = 100.0~meter
+    proc getTime[T](h:USi[T,"m"],g:USi[T,"N/gram"]):USi[T,"s"]=(T(2)*h/g)^0.5
+    echo getTime(height,g)                #4.5160075575178755 second
   u is Unit
   u.T is T
   when U.formatUnit!=u.U:
@@ -550,6 +601,13 @@ type USi*[T;U:UType]=concept u
     usiU==siU
 
 func `+`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,U1]{.inline.} =
+  runnableExamples:
+    let
+      a=1~m
+      b=2~m
+      c=a+b    #3~m
+      d=1~km
+      e=a+b    #1001~m
   when U1==U2:
     Unit[T,U1](T(l)+T(r))
   else:
@@ -561,6 +619,13 @@ func `+`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,U1]{.inline.
     when lsistr!=rsistr:error "not same si unit"
     Unit[T,U1]((lsi[0]*l.float+rsi[0]*r.float)/lsi[0])
 func `-`*[T;U1,U2:static[string]](l:Unit[T,U1],r:Unit[T,U2]):Unit[T,U1]{.inline.} =
+  runnableExamples:
+    let
+      a=2~m
+      b=1~m
+      c=a-b        #1~m
+      d=1~km
+      e=a-d        #-999m
   when U1==U2:
     Unit[T,U1](T(l)-T(r))
   else:
@@ -586,8 +651,5 @@ func `^`*[T;U:static[string]](l:Unit[T,U],n:static[int]):
   Unit[T,powerUnit(U,(n,1))]{.inline.}=Unit[T,powerUnit(U,(n,1))]T(l.float ^ n.float)
 func `^`*[T;U:static[string]](l:Unit[T,U],n:static[float]):
   Unit[T,powerUnit(U,floatToFraction(n))]{.inline.}=Unit[T,powerUnit(U,floatToFraction(n))]T(l.float ^ n)
-
-
-
 
 
