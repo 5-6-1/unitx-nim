@@ -22,17 +22,18 @@ when isMainModule:
     EUR: 0.93~USD,           # Currency
     BTC: 25000~USD, ETH: 1800~USD,     # Crypto
   }
+
   echo "==== Physics: Gravitational Potential ===="
   const g = 9.80665~meter/second^2      # Standard gravity
   let height = 100.0~meter
-  proc getTime[T](h:USi[T,"m"],g:USi[T,"m/s^2"]):USi[T,"s"]=(T(2)*h/g)^0.5
-
+  proc getTime[T;U:static[string]](h:Unit[T,U],g:wisUSi(T,U/"s"^2)):USi[T,"s"]=sqrt T(2)*h/g
   let fallTime = getTime(height,g)
+
 
   echo "Fall time: ", fallTime          # 4.5160075575178755 second
 
   let impactEnergy = height * (75.0~kilogram) * g  # Weight = 75kg
-  echo "Impact energy: ", impactEnergy.siTo"kg*m^2/s^2"  # 73549.875 kilogram·meter²/second²
+  echo "Impact energy: ", impactEnergy.siTo"N*m"  # 73549.875 kilogram·meter²/second²
 
   echo "\n==== Quantum Physics: Photon Energy ===="
   const
@@ -41,7 +42,7 @@ when isMainModule:
 
   let photonWavelength = 532e-9~meter  # Green laser
   let photonEnergy = h * c / photonWavelength
-  echo "Photon energy: ", photonEnergy.convertUnit {J: 1.0/1.602e-19~eV}  # 2.3307870063136877 eV
+  echo "Photon energy: ", photonEnergy.convertUnit {J: 1.0/1.602e-19~eV}  # 2.3307870063136877 ev
 
   echo "\n==== Finance: Unified Portfolio Calculation ===="
   let
@@ -50,7 +51,7 @@ when isMainModule:
     eth = 3~ETH
 
   let portfolioUSD = cash + btc + eth
-  echo "Solution 1 portfolio: ", portfolioUSD  # 35400 USD
+  echo "Solution 1 portfolio: ", portfolioUSD  # 35400 Usd
 
   echo "\n==== Chemistry: Molar Calculations ===="
   let H2O_Mass = 18.01528~g/mol        # Molar mass
@@ -74,7 +75,7 @@ when isMainModule:
   let beamForce = 500.0~newton
   let beamArea = 0.005~m^2
   let stress = beamForce / beamArea
-  echo "Material stress: ", stress.siTo "kPa"  # 10.0 kPa
+  echo "Material stress: ", stress.siTo "kPa"  # 10.0 kpa
 
 
   echo 1 ~ ?-?^2*!^(1/3) #any unit  !¹⸍³·?-?²
@@ -82,5 +83,7 @@ when isMainModule:
   # let invalid = 5~meter + 10~second  # Compile-time error
 
   echo "\n==== Unitx Demonstration Complete ===="
+
+
 ```
 
