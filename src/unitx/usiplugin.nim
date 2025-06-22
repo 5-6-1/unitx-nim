@@ -41,14 +41,10 @@ macro wisUSi*(T,args):untyped=
       divFlag=true
       seq1.add u[2]
     elif eqIdent(u[0],"*"):
-      if divFlag:
-        seq2.add u[2]
-      else:
-        seq1.add u[2]
-    elif eqIdent(u[0],"^"):
-      break
-    else:
-      error "syntax error"
+      if divFlag:seq2.add u[2]
+      else:seq1.add u[2]
+    elif eqIdent(u[0],"^"):break
+    else:error "syntax error"
     u=u[1]
   if divFlag:
     seq2.add u
@@ -67,6 +63,7 @@ macro wisUSi*(T,args):untyped=
   var
     len=0
     i=1
+    plen=0
   for m in mulSeq:
     if m.kind==nnkInfix:len=len or i
     i=i shl 1
@@ -78,1101 +75,216 @@ macro wisUSi*(T,args):untyped=
   case 10*mlen+dlen:
   of 10:                                                            # n p
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"n")
-      later.add mulSeq[0]
-      len=1
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"p")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      len=2
-    else:
-      error"syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"n")
+    of 1:later.add newDotExpr(ident"USimode",ident"p")
+    else:error"syntax error"
   of 20:                                                            # m pm mp pmp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"m")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      len=2
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pm")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      len=3
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"mp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      len=3
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pmp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      len=4
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"m")
+    of 1:later.add newDotExpr(ident"USimode",ident"pm")
+    of 2:later.add newDotExpr(ident"USimode",ident"mp")
+    of 3:later.add newDotExpr(ident"USimode",ident"pmp")
+    else:error "syntax error"
   of 11:                                                            # d pd dp pdp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"d")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      len=2
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      len=3
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"dp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      len=3
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      len=4
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"d")
+    of 1:later.add newDotExpr(ident"USimode",ident"pd")
+    of 2:later.add newDotExpr(ident"USimode",ident"dp")
+    of 3:later.add newDotExpr(ident"USimode",ident"pdp")
+    else:error "syntax error"
   of 30:                                                            # mm pmm mpm pmpm mmp pmmp mpmp pmpmp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mm")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      len=3
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pmm")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      len=4
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"mpm")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      len=4
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pmpm")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      len=5
-    of 4:
-      later.add newDotExpr(ident"USimode",ident"mmp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=4
-    of 5:
-      later.add newDotExpr(ident"USimode",ident"pmmp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=5
-    of 6:
-      later.add newDotExpr(ident"USimode",ident"mpmp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=5
-    of 7:
-      later.add newDotExpr(ident"USimode",ident"pmpmp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mm")
+    of 1:later.add newDotExpr(ident"USimode",ident"pmm")
+    of 2:later.add newDotExpr(ident"USimode",ident"mpm")
+    of 3:later.add newDotExpr(ident"USimode",ident"pmpm")
+    of 4:later.add newDotExpr(ident"USimode",ident"mmp")
+    of 5:later.add newDotExpr(ident"USimode",ident"pmmp")
+    of 6:later.add newDotExpr(ident"USimode",ident"mpmp")
+    of 7:later.add newDotExpr(ident"USimode",ident"pmpmp")
+    else:error "syntax error"
   of 21:                                                            # md pmd mpd pmpd mdp pmdp mpdp pmpdp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"md")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      len=3
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pmd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      len=4
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"mpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      len=4
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pmpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      len=5
-    of 4:
-      later.add newDotExpr(ident"USimode",ident"mdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=4
-    of 5:
-      later.add newDotExpr(ident"USimode",ident"pmdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=5
-    of 6:
-      later.add newDotExpr(ident"USimode",ident"mpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=5
-    of 7:
-      later.add newDotExpr(ident"USimode",ident"pmpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"md")
+    of 1:later.add newDotExpr(ident"USimode",ident"pmd")
+    of 2:later.add newDotExpr(ident"USimode",ident"mpd")
+    of 3:later.add newDotExpr(ident"USimode",ident"pmpd")
+    of 4:later.add newDotExpr(ident"USimode",ident"mdp")
+    of 5:later.add newDotExpr(ident"USimode",ident"pmdp")
+    of 6:later.add newDotExpr(ident"USimode",ident"mpdp")
+    of 7:later.add newDotExpr(ident"USimode",ident"pmpdp")
+    else:error "syntax error"
   of 12:                                                            # dd pdd dpd pdpd ddp pddp dpdp pdpdp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"dd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      len=3
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pdd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      len=4
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"dpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      len=4
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pdpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      len=5
-    of 4:
-      later.add newDotExpr(ident"USimode",ident"ddp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=4
-    of 5:
-      later.add newDotExpr(ident"USimode",ident"pddp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=5
-    of 6:
-      later.add newDotExpr(ident"USimode",ident"dpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=5
-    of 7:
-      later.add newDotExpr(ident"USimode",ident"pdpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      len=6
-    else:
-      error "syntax error"
-  of 40:                                                            # mmm pmmm mpmm pmpmm mmpm pmmpm mpmpm pmpmpm
-                                                                    # mmmp pmmmp mpmmp pmpmmp mmpmp pmmpmp mpmpmp pmpmpmp
+    of 0:later.add newDotExpr(ident"USimode",ident"dd")
+    of 1:later.add newDotExpr(ident"USimode",ident"pdd")
+    of 2:later.add newDotExpr(ident"USimode",ident"dpd")
+    of 3:later.add newDotExpr(ident"USimode",ident"pdpd")
+    of 4:later.add newDotExpr(ident"USimode",ident"ddp")
+    of 5:later.add newDotExpr(ident"USimode",ident"pddp")
+    of 6:later.add newDotExpr(ident"USimode",ident"dpdp")
+    of 7:later.add newDotExpr(ident"USimode",ident"pdpdp")
+    else:error "syntax error"
+  of 40:                                                            # mmm pmmm mpmm pmpmm mmpm pmmpm mpmpm pmpmpm                                                              # mmmp pmmmp mpmmp pmpmmp mmpmp pmmpmp mpmpmp pmpmpmp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmm")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=4
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pmmm")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"mpmm")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pmpmm")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=6
-    of 4:
-      later.add newDotExpr(ident"USimode",ident"mmpm")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=5
-    of 5:
-      later.add newDotExpr(ident"USimode",ident"pmmpm")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 6:
-      later.add newDotExpr(ident"USimode",ident"mpmpm")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 7:
-      later.add newDotExpr(ident"USimode",ident"pmpmpm")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=7
-    of 8:
-      later.add newDotExpr(ident"USimode",ident"mmmp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=5
-    of 9:
-      later.add newDotExpr(ident"USimode",ident"pmmmp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 10:
-      later.add newDotExpr(ident"USimode",ident"mpmmp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 11:
-      later.add newDotExpr(ident"USimode",ident"pmpmmp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 12:
-      later.add newDotExpr(ident"USimode",ident"mmpmp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 13:
-      later.add newDotExpr(ident"USimode",ident"pmmpmp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 14:
-      later.add newDotExpr(ident"USimode",ident"mpmpmp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 15:
-      later.add newDotExpr(ident"USimode",ident"pmpmpmp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=8
-    else:
-      error "syntax error"
-  of 31:                                                            # mmd pmmd mpmd pmpmd mmpd pmmpd mpmpd pmpmpd
-                                                                    # mmdp pmmdp mpmdp pmpmdp mmpdp pmmpdp mpmpdp pmpmpdp
+    of 0:later.add newDotExpr(ident"USimode",ident"mmm")
+    of 1:later.add newDotExpr(ident"USimode",ident"pmmm")
+    of 2:later.add newDotExpr(ident"USimode",ident"mpmm")
+    of 3:later.add newDotExpr(ident"USimode",ident"pmpmm")
+    of 4:later.add newDotExpr(ident"USimode",ident"mmpm")
+    of 5:later.add newDotExpr(ident"USimode",ident"pmmpm")
+    of 6:later.add newDotExpr(ident"USimode",ident"mpmpm")
+    of 7:later.add newDotExpr(ident"USimode",ident"pmpmpm")
+    of 8:later.add newDotExpr(ident"USimode",ident"mmmp")
+    of 9:later.add newDotExpr(ident"USimode",ident"pmmmp")
+    of 10:later.add newDotExpr(ident"USimode",ident"mpmmp")
+    of 11:later.add newDotExpr(ident"USimode",ident"pmpmmp")
+    of 12:later.add newDotExpr(ident"USimode",ident"mmpmp")
+    of 13:later.add newDotExpr(ident"USimode",ident"pmmpmp")
+    of 14:later.add newDotExpr(ident"USimode",ident"mpmpmp")
+    of 15:later.add newDotExpr(ident"USimode",ident"pmpmpmp")
+    else:error "syntax error"
+  of 31:                                                            # mmd pmmd mpmd pmpmd mmpd pmmpd mpmpd pmpmpd                                                              # mmdp pmmdp mpmdp pmpmdp mmpdp pmmpdp mpmpdp pmpmpdp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=4
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pmmd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"mpmd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pmpmd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=6
-    of 4:
-      later.add newDotExpr(ident"USimode",ident"mmpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=5
-    of 5:
-      later.add newDotExpr(ident"USimode",ident"pmmpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 6:
-      later.add newDotExpr(ident"USimode",ident"mpmpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 7:
-      later.add newDotExpr(ident"USimode",ident"pmpmpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=7
-    of 8:
-      later.add newDotExpr(ident"USimode",ident"mmdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=5
-    of 9:
-      later.add newDotExpr(ident"USimode",ident"pmmdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 10:
-      later.add newDotExpr(ident"USimode",ident"mpmdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 11:
-      later.add newDotExpr(ident"USimode",ident"pmpmdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 12:
-      later.add newDotExpr(ident"USimode",ident"mmpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 13:
-      later.add newDotExpr(ident"USimode",ident"pmmpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 14:
-      later.add newDotExpr(ident"USimode",ident"mpmpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 15:
-      later.add newDotExpr(ident"USimode",ident"pmpmpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=8
-    else:
-      error "syntax error"
-  of 22:                                                            # mdd pmdd mpdd pmpdd mdpd pmdpd mpdpd pmpdpd
-                                                                    # mddp pmddp mpddp pmpddp mdpdp pmdpdp mpdpdp pmpdpdp
+    of 0:later.add newDotExpr(ident"USimode",ident"mmd")
+    of 1:later.add newDotExpr(ident"USimode",ident"pmmd")
+    of 2:later.add newDotExpr(ident"USimode",ident"mpmd")
+    of 3:later.add newDotExpr(ident"USimode",ident"pmpmd")
+    of 4:later.add newDotExpr(ident"USimode",ident"mmpd")
+    of 5:later.add newDotExpr(ident"USimode",ident"pmmpd")
+    of 6:later.add newDotExpr(ident"USimode",ident"mpmpd")
+    of 7:later.add newDotExpr(ident"USimode",ident"pmpmpd")
+    of 8:later.add newDotExpr(ident"USimode",ident"mmdp")
+    of 9:later.add newDotExpr(ident"USimode",ident"pmmdp")
+    of 10:later.add newDotExpr(ident"USimode",ident"mpmdp")
+    of 11:later.add newDotExpr(ident"USimode",ident"pmpmdp")
+    of 12:later.add newDotExpr(ident"USimode",ident"mmpdp")
+    of 13:later.add newDotExpr(ident"USimode",ident"pmmpdp")
+    of 14:later.add newDotExpr(ident"USimode",ident"mpmpdp")
+    of 15:later.add newDotExpr(ident"USimode",ident"pmpmpdp")
+    else:error "syntax error"
+  of 22:                                                            # mdd pmdd mpdd pmpdd mdpd pmdpd mpdpd pmpdpd                                                              # mddp pmddp mpddp pmpddp mdpdp pmdpdp mpdpdp pmpdpdp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mdd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=4
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pmdd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"mpdd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pmpdd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=6
-    of 4:
-      later.add newDotExpr(ident"USimode",ident"mdpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=5
-    of 5:
-      later.add newDotExpr(ident"USimode",ident"pmdpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 6:
-      later.add newDotExpr(ident"USimode",ident"mpdpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 7:
-      later.add newDotExpr(ident"USimode",ident"pmpdpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=7
-    of 8:
-      later.add newDotExpr(ident"USimode",ident"mddp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=5
-    of 9:
-      later.add newDotExpr(ident"USimode",ident"pmddp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 10:
-      later.add newDotExpr(ident"USimode",ident"mpddp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 11:
-      later.add newDotExpr(ident"USimode",ident"pmpddp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 12:
-      later.add newDotExpr(ident"USimode",ident"mdpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 13:
-      later.add newDotExpr(ident"USimode",ident"pmdpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 14:
-      later.add newDotExpr(ident"USimode",ident"mpdpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 15:
-      later.add newDotExpr(ident"USimode",ident"pmpdpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=8
-    else:
-      error "syntax error"
-  of 13:                                                            # ddd pddd dpdd pdpdd ddpd pddpd dpdpd pdpdpd
-                                                                    # dddp pdddp dpddp pdpddp ddpdp pddpdp dpdpdp pdpdpdp
+    of 0:later.add newDotExpr(ident"USimode",ident"mdd")
+    of 1:later.add newDotExpr(ident"USimode",ident"pmdd")
+    of 2:later.add newDotExpr(ident"USimode",ident"mpdd")
+    of 3:later.add newDotExpr(ident"USimode",ident"pmpdd")
+    of 4:later.add newDotExpr(ident"USimode",ident"mdpd")
+    of 5:later.add newDotExpr(ident"USimode",ident"pmdpd")
+    of 6:later.add newDotExpr(ident"USimode",ident"mpdpd")
+    of 7:later.add newDotExpr(ident"USimode",ident"pmpdpd")
+    of 8:later.add newDotExpr(ident"USimode",ident"mddp")
+    of 9:later.add newDotExpr(ident"USimode",ident"pmddp")
+    of 10:later.add newDotExpr(ident"USimode",ident"mpddp")
+    of 11:later.add newDotExpr(ident"USimode",ident"pmpddp")
+    of 12:later.add newDotExpr(ident"USimode",ident"mdpdp")
+    of 13:later.add newDotExpr(ident"USimode",ident"pmdpdp")
+    of 14:later.add newDotExpr(ident"USimode",ident"mpdpdp")
+    of 15:later.add newDotExpr(ident"USimode",ident"pmpdpdp")
+    else:error "syntax error"
+  of 13:                                                            # ddd pddd dpdd pdpdd ddpd pddpd dpdpd pdpdpd                                                              # dddp pdddp dpddp pdpddp ddpdp pddpdp dpdpdp pdpdpdp
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"ddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=4
-    of 1:
-      later.add newDotExpr(ident"USimode",ident"pddd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 2:
-      later.add newDotExpr(ident"USimode",ident"dpdd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=5
-    of 3:
-      later.add newDotExpr(ident"USimode",ident"pdpdd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      len=6
-    of 4:
-      later.add newDotExpr(ident"USimode",ident"ddpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=5
-    of 5:
-      later.add newDotExpr(ident"USimode",ident"pddpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 6:
-      later.add newDotExpr(ident"USimode",ident"dpdpd")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=6
-    of 7:
-      later.add newDotExpr(ident"USimode",ident"pdpdpd")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3]
-      len=7
-    of 8:
-      later.add newDotExpr(ident"USimode",ident"dddp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=5
-    of 9:
-      later.add newDotExpr(ident"USimode",ident"pdddp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 10:
-      later.add newDotExpr(ident"USimode",ident"dpddp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 11:
-      later.add newDotExpr(ident"USimode",ident"pdpddp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 12:
-      later.add newDotExpr(ident"USimode",ident"ddpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=6
-    of 13:
-      later.add newDotExpr(ident"USimode",ident"pddpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 14:
-      later.add newDotExpr(ident"USimode",ident"dpdpdp")
-      later.add mulSeq[0]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=7
-    of 15:
-      later.add newDotExpr(ident"USimode",ident"pdpdpdp")
-      later.add mulSeq[0][1]
-      later.add mulSeq[0][2]
-      later.add mulSeq[1][1]
-      later.add mulSeq[1][2]
-      later.add mulSeq[2][1]
-      later.add mulSeq[2][2]
-      later.add mulSeq[3][1]
-      later.add mulSeq[3][2]
-      len=8
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"ddd")
+    of 1:later.add newDotExpr(ident"USimode",ident"pddd")
+    of 2:later.add newDotExpr(ident"USimode",ident"dpdd")
+    of 3:later.add newDotExpr(ident"USimode",ident"pdpdd")
+    of 4:later.add newDotExpr(ident"USimode",ident"ddpd")
+    of 5:later.add newDotExpr(ident"USimode",ident"pddpd")
+    of 6:later.add newDotExpr(ident"USimode",ident"dpdpd")
+    of 7:later.add newDotExpr(ident"USimode",ident"pdpdpd")
+    of 8:later.add newDotExpr(ident"USimode",ident"dddp")
+    of 9:later.add newDotExpr(ident"USimode",ident"pdddp")
+    of 10:later.add newDotExpr(ident"USimode",ident"dpddp")
+    of 11:later.add newDotExpr(ident"USimode",ident"pdpddp")
+    of 12:later.add newDotExpr(ident"USimode",ident"ddpdp")
+    of 13:later.add newDotExpr(ident"USimode",ident"pddpdp")
+    of 14:later.add newDotExpr(ident"USimode",ident"dpdpdp")
+    of 15:later.add newDotExpr(ident"USimode",ident"pdpdpdp")
+    else:error "syntax error"
   of 50:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmm")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      len=5
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmm")
+    else:error "syntax error"
   of 41:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      len=5
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmd")
+    else:error "syntax error"
   of 32:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmdd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      len=5
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmdd")
+    else:error "syntax error"
   of 23:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      len=5
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mddd")
+    else:error "syntax error"
   of 14:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"dddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      len=5
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"dddd")
+    else:error "syntax error"
   of 60:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmmm")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmmm")
+    else:error "syntax error"
   of 51:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmmd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmmd")
+    else:error "syntax error"
   of 42:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmdd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmdd")
+    else:error "syntax error"
   of 33:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmddd")
+    else:error "syntax error"
   of 24:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mdddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mdddd")
+    else:error "syntax error"
   of 15:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"ddddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      len=6
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"ddddd")
+    else:error "syntax error"
   of 70:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmmmm")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      later.add mulSeq[6]
-      len=7
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmmmm")
+    else:error "syntax error"
   of 61:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmmmd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      later.add mulSeq[6]
-      len=7
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmmmd")
+    else:error "syntax error"
   of 52:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmmdd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      later.add mulSeq[6]
-      len=7
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmmdd")
+    else:error "syntax error"
   of 43:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmmddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      later.add mulSeq[6]
-      len=7
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmmddd")
+    else:error "syntax error"
   of 34:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mmdddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      later.add mulSeq[6]
-      len=7
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mmdddd")
+    else:error "syntax error"
   of 25:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"mddddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      later.add mulSeq[6]
-      len=7
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"mddddd")
+    else:error "syntax error"
   of 16:
     case len:
-    of 0:
-      later.add newDotExpr(ident"USimode",ident"dddddd")
-      later.add mulSeq[0]
-      later.add mulSeq[1]
-      later.add mulSeq[2]
-      later.add mulSeq[3]
-      later.add mulSeq[4]
-      later.add mulSeq[5]
-      later.add mulSeq[6]
-      len=7
-    else:
-      error "syntax error"
+    of 0:later.add newDotExpr(ident"USimode",ident"dddddd")
+    else:error "syntax error"
   else:
     error "syntax error"
+  for t in 0..<mlen+dlen:
+    if (len and (1 shl t))==0:
+      later.add mulseq[t]
+      inc plen
+    else:
+      later.add mulSeq[t][1]
+      later.add mulSeq[t][2]
+      plen+=2
   result=
-    case len:
+    case plen:
     of 1:newTree(nnkBracketExpr,ident"AutoUSi0")
     of 2:newTree(nnkBracketExpr,ident"AutoUSi1")
     of 3:newTree(nnkBracketExpr,ident"AutoUSi2")
@@ -1211,8 +323,7 @@ type USimode*{.pure.}=enum
   pmpmpd pmpmdp pmmpdp mpmpdp
   pmpdpd pmpddp pmdpdp mpdpdp
   pdpdpd pdpddp pddpdp dpdpdp
-  pmpmpmp pmpmpdp pmpdpdp pdpdpdp                     # 4*5=20
-                                                      # all=116
+  pmpmpmp pmpmpdp pmpdpdp pdpdpdp                     # 4*5=20                                                # all=116
 
 
 
