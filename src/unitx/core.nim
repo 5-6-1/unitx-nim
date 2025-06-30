@@ -5,7 +5,7 @@ from macros import quote,eqIdent,newIntLitNode,nnkDotExpr,
   nnkStaticStmt,newStmtList,`$`,error,add,nnkAsgn,treeRepr,len,
   nnkBracketExpr,nnkTupleConstr,newStrLitNode,nnkStrLit,nnkBracket
 from tables import `[]`,`[]=`,initTable,toTable,contains,Table,pairs
-from strutils import split,replace,join,parseInt,contains,toLowerAscii
+from strutils import split,replace,join,parseInt,contains,toLowerAscii,parseFloat
 from algorithm import sort
 from math import `^`,floor
 
@@ -241,10 +241,12 @@ func formatName(u:string):string{.compileTime.}=
   for c in u:
     if flag:
       result.add c
-    else:
-      if c in 'A'..'Z':
+      flag=false
+    elif c=='_':
+      continue
+    elif c in 'A'..'Z':
         result.add c.tolowerAscii
-      else:result.add c
+    else:result.add c
 template unit*[T;U:UStr](u:Unit[T,U]):untyped=
   runnableExamples:
     let x=1~kg*m^(1/2)/s^2
@@ -332,15 +334,18 @@ func tupUnit(s:static[string]):static[seq[(string,(int,int))]]{.compileTime.}=
       exp=
         if llist.len>1:
           let nlist=llist[1].split"/"
-          let x=nlist[0].parseInt
-          if x==0: continue
-          if nlist.len==1:
-            (x,1)
+          if nlist[0].contains".":
+            floatToFraction parseFloat nlist[0]
           else:
-            let y=nlist[1].parseInt
-            if y>0: simplifyFrac (x,y)
-            elif y<0: simplifyFrac (-x,-y)
-            else: raise newException(ValueError, "invalid exponent")
+            let x=nlist[0].parseInt
+            if x==0: continue
+            if nlist.len==1:
+              (x,1)
+            else:
+              let y=nlist[1].parseInt
+              if y>0: simplifyFrac (x,y)
+              elif y<0: simplifyFrac (-x,-y)
+              else: raise newException(ValueError, "invalid exponent")
         else:(1,1)
     result.add (base,exp)
   for l in right:
@@ -457,10 +462,11 @@ macro `~/`*(val,str):Unit {.warning[IgnoredSymbolInjection]:off.}=
     let f=1~/s
     let f0=1 ~ /s
     #equal
-  let x=powUnitHelper(str.astToStr,(-1,1))
+  let x=powUnit(str.astToStr,(-1,1))
   if str.kind!=nnkStrLit:
     quote do:newUnit(`val`,`x`)
   else:error "syntax error"
+template `{}`*(val,str):untyped=val~str# `{}`语法是`~`语法糖,用于减少~操作符所带来的优先级问题,且提供同样简洁直观的写法
 func deUnit*[T;U:UStr](u:Unit[T,U]):T{.inline.}=T(u)#获得单位数值
 func convertUnitHelp(val:static[string],orign:static[string]):static[(int,int)]{.compileTime.}=
   let tup=tupUnit(val)
