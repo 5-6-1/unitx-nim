@@ -12,7 +12,6 @@ Zero-Cost • Compile-Time • Fractional Exponents
 ```nim
 import unitx
 import unitx/[simphy,physics]
-import math
 
 when isMainModule:
   # Define common units in SI base
@@ -26,13 +25,16 @@ when isMainModule:
   echo "==== Physics: Gravitational Potential ===="
   const g = 9.80665~meter/second^2      # Standard gravity
   let height = 100.0~meter
-  proc getTime[T;U:static[string]](h:Unit[T,U],g:wisUSi(T,U/"s"^2)):USi[T,"s"]=sqrt T(2)*h/g
+  proc getTime[T;U:static[string]](h:Unit[T,U],g:wisUSi(T,U^0.5*"/s"^2*U^(1/2))):USi[T,"s"]=sqrt T(2)*h/g
+  #Unit是本体,右侧为死的字符串约束
+  #USi是concept,根据Si系统匹配
+  #wisUSi是宏,生成concept,用来处理泛型的乘除幂操作
   let fallTime = getTime(height,g)
 
 
   echo "Fall time: ", fallTime          # 4.5160075575178755 second
 
-  let impactEnergy = height * (75.0~kilogram) * g  # Weight = 75kg
+  let impactEnergy = height * 75.0{kilogram} * g  # `{}`语法是`~`语法糖,用于减少~操作符所带来的优先级问题,且提供同样简洁直观的写法
   echo "Impact energy: ", impactEnergy.siTo"N*m"  # 73549.875 kilogram·meter²/second²
 
   echo "\n==== Quantum Physics: Photon Energy ===="
@@ -58,14 +60,14 @@ when isMainModule:
   let sampleMass = 100.0~g
   let moles = sampleMass / H2O_Mass
 
-  const N_A = 6.02214076e23 ~ /mol       # Avogadro's constant
+  const N_A = 6.02214076e23~/mol       # Avogadro's constant
   let molecules = moles * N_A
   echo "Molecules in 100g water: ≈", molecules #3.342796093094306e+24
 
   echo "\n==== Astronomy: Cosmic Scales ===="
   # 更精确的单位定义
   let solarSystem = 80.0~au
-  echo "Solar System diameter: ", (0.0~ly) + solarSystem # 0.0012650005927856527 ly
+  echo "Solar System diameter: ", 0.0{ly} + solarSystem # 0.0012650005927856527 ly
 
   let andromeda = 2.5e6~ly
   let cosmicTravelTime = andromeda / c  # 单位：秒
