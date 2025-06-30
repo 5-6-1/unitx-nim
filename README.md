@@ -35,7 +35,7 @@ when isMainModule:
   echo "Fall time: ", fallTime          # 4.5160075575178755 second
 
   let impactEnergy = height * 75.0{kilogram} * g  # `{}`语法是`~`语法糖,用于减少~操作符所带来的优先级问题,且提供同样简洁直观的写法
-  echo "Impact energy: ", impactEnergy.siTo"N*m"  # 73549.875 kilogram·meter²/second²
+  echo "Impact energy: ", impactEnergy.siTo"N*m"  # 73549.875 N·m
 
   echo "\n==== Quantum Physics: Photon Energy ===="
   const
