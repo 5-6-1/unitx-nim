@@ -1,115 +1,208 @@
-from core import addSiUnit,addSimpleSiUnit,addSiUnitInner,formatUnit
+from ../unitx import addSiUnit,addSimpleSiUnit,addSiUnitInner,formatUnit
 {.used.}
 # 简写单位系统（兼容全称）
+
+# ================ SI基本单位简写 ================
 addSiUnit:
-  # ============== 基本单位简写 ==============
-  A: ampere                     # 安培
-  cd: candela                   # 坎德拉
-  K: kelvin                     # 开尔文
-  kg: kilogram                  # 千克
-  m: meter                      # 米
-  mol: mole                     # 摩尔
-  s: second                     # 秒
+  A: ampere       # 安培
+  cd: candela     # 坎德拉
+  K: kelvin       # 开尔文
+  kg: kilogram    # 千克
+  m: meter        # 米
+  mol: mole       # 摩尔
+  s: second       # 秒
 
-  # ============== 长度单位简写 ==============
-  Å: 1e-10~m                    # 埃
-  au: 149597870700~m            # 天文单位
-  cm: 0.01~m                    # 厘米
-  dm: 0.1~m                     # 分米
-  ft: 0.3048~m                  # 英尺
-  km: 1000~m                    # 千米
-  ly: 9460730472580800~m        # 光年
-  mm: 0.001~m                   # 毫米
-  µm: 1e-6~m                    # 微米
-  nm: 1e-9~m                    # 纳米
-  nmi: 1852~m                   # 海里
-  pc: 3.08567758149137e16~m     # 秒差距
-  pm: 1e-12~m                   # 皮米
-  yd: 0.9144~m                  # 码
+# ================ 长度单位简写 ================
+  au: astronomical_unit
+  am: attometer
+  cm: centimeter
+  dm: decimeter
+  Em: exameter
+  fm: femtometer
+  km: kilometer
+  ly: light_year
+  Mm: megameter
+  mm: millimeter
+  nm: nanometer
+  pc: parsec
+  Pm: petameter
+  pm: picometer
+  Tm: terameter
+  Ym: yottameter
+  Zm: zettameter
 
-  # ============== 质量单位简写 ==============
-  dag: 0.01~kg                 # 十克
-  dg: 0.0001~kg                # 分克
-  g: 0.001~kg                  # 克
-  mg: 1e-6~kg                  # 毫克
-  µg: 1e-9~kg                  # 微克
-  ng: 1e-12~kg                 # 纳克
-  t: 1000~kg                   # 吨
-  lb: 0.45359237~kg            # 磅
-  oz: 0.028349523125~kg        # 盎司
+  # 非SI长度单位简写
+  ft: foot
+  mi: mile
+  yd: yard
 
-  # ============== 时间单位简写 ==============
-  min: 60~s                     # 分钟
-  h: 3600~s                     # 小时
-  d: 86400~s                    # 天
-  wk: 604800~s                  # 周
-  yr: 31557600~s                # 年
-  ms: 0.001~s                   # 毫秒
-  µs: 1e-6~s                    # 微秒
-  ns: 1e-9~s                    # 纳秒
+# ================ 质量单位简写 ================
+  cg: centigram
+  dag: decagram
+  dg: decigram
+  Gg: gigagram
+  g: gram
+  hg: hectogram
+  Mg: megagram
+  mg: milligram
+  ng: nanogram
+  pg: picogram
+  Tg: teragram
+  t: metric_ton
 
-  # ============== 电流单位简写 ==============
-  mA: 0.001~A                   # 毫安
-  µA: 1e-6~A                    # 微安
-  kA: 1000~A                    # 千安
+  # 非SI质量单位简写
+  u: atomic_mass_unit
+  Da: dalton
+  lb: pound
+  oz: ounce
 
-  # ============== 力与能量单位简写 ==============
-  N: kilogram*m/s^2             # 牛顿
-  J: N*m                        # 焦耳
-  eV: 1.602176634e-19~J         # 电子伏特
-  keV: 1e3~eV                   # 千电子伏特
-  MeV: 1e6~eV                   # 兆电子伏特
-  GeV: 1e9~eV                   # 吉电子伏特
-  TeV: 1e12~eV                  # 太电子伏特
-  cal: 4.184~J                  # 卡路里
-  kcal: 4184~J                  # 千卡
+# ================ 时间单位简写 ================
+  cs: centisecond
+  ds: decisecond
+  fs: femtosecond
+  h: hour
+  ks: kilosecond
+  ms: millisecond
+  min: minute
+  ns: nanosecond
+  ps: picosecond
+  Ts: terasecond
+  wk: week
+  yr: year
+  mo: month
 
-  # ============== 功率单位简写 ==============
-  W: J/s                        # 瓦特
-  kW: 1000~W                    # 千瓦
-  MW: 1e6~W                     # 兆瓦
-  GW: 1e9~W                     # 吉瓦
-  hp: 745.69987158227~W         # 马力
+# ================ 电流单位简写 ================
+  cA: centiampere
+  dA: deciampere
+  kA: kiloampere
+  MA: megaampere
+  mA: milliampere
+  nA: nanoampere
+  pA: picoampere
 
-  # ============== 压力单位简写 ==============
-  Pa: N/m^2                     # 帕斯卡
-  hPa: 100~Pa                   # 百帕
-  kPa: 1000~Pa                  # 千帕
-  MPa: 1e6~Pa                   # 兆帕
-  bar: 100000~Pa                # 巴
-  atm: 101325~Pa                # 标准大气压
-  Torr: 133.322~Pa              # 托
-  psi: 6894.757293168~Pa        # 磅每平方英寸
+# ================ 温度单位简写 ================
+  mK: millikelvin
+  nK: nanokelvin
 
-  # ============== 电磁学单位简写 ==============
-  C: A*s                        # 库仑
-  V: W/A                        # 伏特
-  Ω: V/A                        # 欧姆 (使用Unicode符号避免关键字冲突)
-  S: Ω                          # 西门子
-  F: C/V                        # 法拉
-  H: V*s/A                      # 亨利
-  T: Wb/m^2                     # 特斯拉
-  Wb: V*s                       # 韦伯
-  Gs: 1e-4~T                    # 高斯
+# ================ 物质的量单位简写 ================
+  cmol: centimole
+  dmol: decimole
+  kmol: kilomole
+  mmol: millimole
+  nmol: nanomole
+  pmol: picomole
 
-  # ============== 其他常用简写 ==============
-  Hz: /s                        # 赫兹
-  kHz: 1000~Hz                  # 千赫兹
-  MHz: 1e6~Hz                   # 兆赫兹
-  GHz: 1e9~Hz                   # 吉赫兹
-  L: 0.001~m^3                  # 升
-  mL: 1e-6~m^3                  # 毫升
-  Bq: /s                        # 贝克勒尔
-  Gy: J/kg                      # 戈瑞
-  Sv: J/kg                      # 希沃特
-  lm: cd*sr                     # 流明
-  lx: lm/m^2                    # 勒克斯
+# ================ 发光强度单位简写 ================
+  ccd: centicandela
+  dcd: decicandela
+  kcd: kilocandela
+  mcd: millicandela
 
-  # ============== 组合单位简写 ==============
-  mps: m/s                      # 米每秒
-  kmph: 1/3.6~m/s               # 千米每小时
-  rpm: 0.104719755~rad/s        # 转每分钟
-  Nm: N*m                       # 牛顿米
-  Wh: 3600~J                    # 瓦时
-  kWh: 3.6e6~J                  # 千瓦时
+# ================ 力学导出单位简写 ================
+  N: newton
+  dyn: dyne
+  lbf: pound_force
+  kgf: kilogram_force
+  ozf: ounce_force
 
+  Pa: pascal
+  kPa: kilo*Pa
+  atm: atmosphere
+  mmHg: millimeter_of_mercury
+  Ba: barye
+
+  J: joule
+  cal: calorie
+  kcal: kilocalorie
+  eV: electronvolt
+  keV: kiloelectronvolt
+  MeV: megaelectronvolt
+  GeV: gigaelectronvolt
+  TeV: teraelectronvolt
+  BTU: british_thermal_unit
+  thm: therm
+
+  W: watt
+  hp: horsepower
+  kW: kilowatt
+  MW: megawatt
+  GW: gigawatt
+  TW: terawatt
+
+  Nm: newton_meter
+
+# ================ 电磁学导出单位简写 ================
+  C: coulomb
+  e: elementary_charge
+
+  V: volt
+  kV: kilovolt
+  MV: megavolt
+
+  kohm: kilohm
+  Mohm: megaohm
+
+  S: siemens
+
+  F: farad
+  pF: picofarad
+
+  H: henry
+  mH: millihenry
+
+  Wb: weber
+  kWb: kiloweber
+
+  T: tesla
+  Gs: gauss
+  kGs: kilogauss
+
+  Oe: oersted
+  Gb: gilbert
+
+# ================ 放射性导出单位简写 ================
+  Bq: becquerel
+  Ci: curie
+  Rd: rutherford
+
+  Gy: gray
+  Sv: sievert
+
+
+  R: roentgen
+
+# ================ 化学导出单位简写 ================
+  M: molar
+  mM: millimolar
+  nM: nanomolar
+  pM: picomolar
+
+# ================ 流体力学导出单位简写 ================
+  Pas: pascal_second
+  P: poise
+  St: stokes
+
+  D: darcy
+  mD: millidarcy
+
+# ================ 核物理导出单位简写 ================
+  b: barn
+  mb: millibarn
+
+# ================ 天体物理导出单位简写 ================
+  Rsun: solar_radius
+  Lsun: solar_luminosity
+  Rearth: earth_radius
+
+# ================ 地球物理导出单位简写 ================
+  Gal: gal
+  mGal: milligal
+  Eo: eotvos
+
+# ================ 工程学导出单位简写 ================
+  kn: knot
+  g0: standard_gravity
+  pdl: poundal
+  at: technical_atmosphere
+  tTNT: ton_of_tnt
+  pn: poncelet
