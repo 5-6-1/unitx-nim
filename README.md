@@ -14,7 +14,6 @@ import unitx
 import unitx/[simphy,physics]
 
 when isMainModule:
-    import unitx/[simphy,physics]
     # 1. 基本单位创建与运算 (`{}` 宏)
     let distance = 100{km}        # 距离
     let time = 2{h}               # 时间 (使用simphy中的小时单位)
